@@ -1,0 +1,3 @@
+2023/01/12-11:09:09.640 8198 Reusing MANIFEST /home/saasita/go/path/Default/Sync Data/LevelDB/MANIFEST-000001
+2023/01/12-11:09:09.640 8198 Recovering log #3
+2023/01/12-11:09:09.640 8198 Reusing old log /home/saasita/go/path/Default/Sync Data/LevelDB/000003.log 

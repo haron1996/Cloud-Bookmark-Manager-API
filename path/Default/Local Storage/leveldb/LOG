@@ -1,0 +1,6 @@
+2023/01/12-11:21:40.081 3 Reusing MANIFEST /home/saasita/go/path/Default/Local Storage/leveldb/MANIFEST-000001
+2023/01/12-11:21:40.082 3 Recovering log #3
+2023/01/12-11:21:40.082 3 Reusing old log /home/saasita/go/path/Default/Local Storage/leveldb/000003.log 
+2023/01/12-11:22:50.115 3 Level-0 table #5: started
+2023/01/12-11:22:50.125 3 Level-0 table #5: 52367 bytes OK
+2023/01/12-11:22:50.136 3 Delete type=0 #3
