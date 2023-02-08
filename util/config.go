@@ -17,6 +17,8 @@ type Config struct {
 	PublicKeyHex           string        `mapstructure:"publicKeyHex"`
 	DOSecretKey            string        `mapstructure:"doSecret"`
 	DOSpacesKey            string        `mapstructure:"doSpaces"`
+	MailJetApiKey          string        `mapstructure:"mailJetApiKey"`
+	MailJetSecretKey       string        `mapstructure:"mailJetSecretKey"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

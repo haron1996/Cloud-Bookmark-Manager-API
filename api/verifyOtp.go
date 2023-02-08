@@ -10,32 +10,35 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-ozzo/ozzo-validation/is"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/jackc/pgconn"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
-type refreshToken struct {
-	RefreshToken string `json:"refresh_token"`
+type otpVerification struct {
+	Code  string `json:"code"`
+	Email string `json:"email"`
 }
 
-func (s refreshToken) Validate(reqValidationChan chan error) error {
-	returnVal := validation.ValidateStruct(&s,
-		validation.Field(&s.RefreshToken, validation.Required.Error("refresh token required")),
+func (s otpVerification) Validate(requestValidationChan chan error) error {
+	err := validation.ValidateStruct(&s,
+		validation.Field(&s.Email, validation.Required.Error("email address is required"), is.Email.Error("email must be valid email address")),
+		validation.Field(&s.Code, validation.Required.Error("verification code is required"), validation.Length(6, 6).Error("verification code must be 6 characters long")),
 	)
-	reqValidationChan <- returnVal
 
-	return returnVal
+	requestValidationChan <- err
+
+	return err
 }
 
-func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	body := json.NewDecoder(r.Body)
 
 	body.DisallowUnknownFields()
 
-	var req refreshToken
+	var req otpVerification
 
 	err := body.Decode(&req)
 	if err != nil {
@@ -77,21 +80,36 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
-	payload, err := auth.VerifyToken(req.RefreshToken)
+	queries := sqlc.New(h.db)
+
+	otp, err := queries.GetOtp(context.Background(), req.Email)
 	if err != nil {
-		util.Response(w, err.Error(), http.StatusUnauthorized)
+		if errors.Is(err, sql.ErrNoRows) {
+			util.Response(w, "otp was not found", http.StatusNotFound)
+			return
+		} else {
+			util.Response(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if otp.Code != req.Code {
+		util.Response(w, "invalid code", http.StatusUnauthorized)
 		return
 	}
 
-	queries := sqlc.New(h.db)
+	if time.Now().UTC().After(otp.Expiry) {
+		util.Response(w, "code has expired", http.StatusUnauthorized)
+		return
+	}
 
-	account, err := queries.GetAccount(context.Background(), payload.AccountID)
+	if err = queries.UpdateAccountEmailVerificationStatus(context.Background(), otp.Email); err != nil {
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	account, err := queries.GetAccountByEmail(context.Background(), otp.Email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			util.Response(w, "account not found", http.StatusUnauthorized)
-			return
-		}
-
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -100,6 +118,11 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("failed to load config file with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = queries.DeleteEmailVerificationCode(context.Background(), account.Email); err != nil {
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
@@ -128,26 +151,24 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	_, err = queries.CreateAccountSession(context.Background(), createAccountSessionParams)
 	if err != nil {
-		var pgErr *pgconn.PgError
-
-		if errors.As(err, &pgErr) {
-			log.Printf("failed co create session with err: %s", pgErr.Message)
-			util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
-			return
-		} else {
-			log.Printf("failed to create session with error: %s", err.Error())
-			util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
-			return
-		}
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		return
 	}
 
-	account, err = queries.GetAccount(context.Background(), account.ID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			util.Response(w, "account not found", http.StatusUnauthorized)
-			return
-		}
+	// refreshTokenCookie := http.Cookie{
+	// 	Name:     "refresh_token",
+	// 	Value:    refreshToken,
+	// 	Path:     "/public/refresh_token",
+	// 	Expires:  refreshTokenPayload.Expiry,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSite(http.SameSiteStrictMode),
+	// 	HttpOnly: true,
+	// }
 
+	// http.SetCookie(w, &refreshTokenCookie)
+
+	account, err = queries.GetAccountByEmail(context.Background(), otp.Email)
+	if err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}

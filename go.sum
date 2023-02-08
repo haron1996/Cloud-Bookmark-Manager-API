@@ -288,6 +288,12 @@ github.com/magiconair/properties v1.8.6 h1:5ibWZ6iY0NctNGWo87LalDlEZ6R41TqbbDamh
 github.com/magiconair/properties v1.8.6/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
 github.com/mailgun/mailgun-go/v4 v4.8.1 h1:1+MdKakJuXnW2JJDbyPdO1ngAANOyHyVPxQvFF8Sq6c=
 github.com/mailgun/mailgun-go/v4 v4.8.1/go.mod h1:FJlF9rI5cQT+mrwujtJjPMbIVy3Ebor9bKTVsJ0QU40=
+github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394 h1:+6kiV40vfmh17TDlZG15C2uGje1/XBGT32j6xKmUkqM=
+github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394/go.mod h1:ogN8Sxy3n5VKLhQxbtSBM3ICG/VgjXS/akQJIoDSrgA=
+github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0 h1:/gjowTurgK4iqLzVAQmjtcldyaW6tbJNA4PzZsuj2Ks=
+github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0/go.mod h1:Nw3mVzRxV0CVDTlzaRcADGKt4PMNbT7gYIyEtjMrVIM=
+github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1 h1:VwdxYT1lPOIBZolqNtN6GcpdOySgHhCFQNsbN5P7uh8=
+github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1/go.mod h1:2SU3t6eh/uK6BSeBmdhpIUau99L4iPlIfbx4o4pAUQs=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=

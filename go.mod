@@ -17,6 +17,8 @@ require (
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.0
 	github.com/mailgun/mailgun-go/v4 v4.8.1
+	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
+	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1
 	github.com/nats-io/nats.go v1.21.0
 	github.com/spf13/viper v1.12.0
 	github.com/vk-rv/pvx v0.0.0-20210912195928-ac00bc32f6e7
@@ -58,6 +60,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
+	github.com/mailjet/mailjet-apiv3-go/v3 v3.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

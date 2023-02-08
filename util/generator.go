@@ -35,6 +35,8 @@ func OTPGenerator() string {
 	wg.Add(1)
 
 	go func() {
+		defer wg.Done()
+
 		randomStringGen(charSet, 6, stringChan)
 	}()
 

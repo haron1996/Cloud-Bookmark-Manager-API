@@ -152,18 +152,6 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	refreshTokenCookie := http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Path:     "http://localhost:5000/public/refresh_token",
-		Expires:  refreshTokenPayload.Expiry,
-		Secure:   true,
-		SameSite: http.SameSite(http.SameSiteStrictMode),
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, &refreshTokenCookie)
-
 	account, err = q.GetAccount(context.Background(), account.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -183,7 +171,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := newsession(account, accessToken, accessTokenPayload.Expiry)
+	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
 
 	util.JsonResponse(w, res)
 }

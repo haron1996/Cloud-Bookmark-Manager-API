@@ -105,16 +105,10 @@ func (h *BaseHandler) CheckIfIsAuthenticated(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if account.LastLogin.Unix() == payload.IssuedAt.Unix() {
-		util.Response(w, "true", http.StatusOK)
-		return
-	} else {
-		log.Println("account is not authenticated")
-		util.Response(w, "false", http.StatusForbidden)
+	if account.LastLogin.Unix() != payload.IssuedAt.Unix() {
+		util.Response(w, "user not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	// t := strings.Join(strings.Split(strings.Split(account.LastLogin.Local().Format(time.RFC3339), "T")[0], "-"), "/")
-
-	// log.Println(t)
+	util.Response(w, "user logged in", http.StatusOK)
 }

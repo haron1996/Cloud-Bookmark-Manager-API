@@ -144,6 +144,15 @@ func (q *Queries) NewAccount(ctx context.Context, arg NewAccountParams) (Account
 	return i, err
 }
 
+const updateAccountEmailVerificationStatus = `-- name: UpdateAccountEmailVerificationStatus :exec
+UPDATE account SET email_verified = 'TRUE' WHERE email = $1
+`
+
+func (q *Queries) UpdateAccountEmailVerificationStatus(ctx context.Context, email string) error {
+	_, err := q.db.ExecContext(ctx, updateAccountEmailVerificationStatus, email)
+	return err
+}
+
 const updateLastLogin = `-- name: UpdateLastLogin :one
 UPDATE account
 SET last_login = $1

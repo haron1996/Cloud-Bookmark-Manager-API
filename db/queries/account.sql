@@ -22,6 +22,9 @@ SET last_login = $1
 WHERE id = $2
 RETURNING *;
 
+-- name: UpdateAccountEmailVerificationStatus :exec
+UPDATE account SET email_verified = 'TRUE' WHERE email = $1;
+
 -- name: EmailExists :one
 SELECT EXISTS (SELECT * FROM account WHERE email = $1 LIMIT 1);
 

@@ -25,16 +25,18 @@ type signUp struct {
 }
 
 type session struct {
-	Account     sqlc.Account
-	AccessToken string    `json:"access_token"`
-	Expiry      time.Time `json:"expiry"`
+	Account      sqlc.Account
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	Expiry       time.Time `json:"expiry"`
 }
 
-func newsession(account sqlc.Account, accessToken string, expiry time.Time) session {
+func newsession(account sqlc.Account, accessToken, refreshToken string, expiry time.Time) session {
 	return session{
-		Account:     account,
-		AccessToken: accessToken,
-		Expiry:      expiry,
+		Account:      account,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Expiry:       expiry,
 	}
 }
 
@@ -183,17 +185,17 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	refreshTokenCookie := http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Path:     "http://localhost:5000/public/refresh_token",
-		Expires:  refreshTokenPayload.Expiry,
-		Secure:   true,
-		SameSite: http.SameSite(http.SameSiteStrictMode),
-		HttpOnly: true,
-	}
+	// refreshTokenCookie := http.Cookie{
+	// 	Name:     "refresh_token",
+	// 	Value:    refreshToken,
+	// 	Path:     "http://localhost:5000/public/refresh_token",
+	// 	Expires:  refreshTokenPayload.Expiry,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSite(http.SameSiteStrictMode),
+	// 	HttpOnly: true,
+	// }
 
-	http.SetCookie(w, &refreshTokenCookie)
+	// http.SetCookie(w, &refreshTokenCookie)
 
 	account, err = q.GetAccount(context.Background(), account.ID)
 	if err != nil {
@@ -214,7 +216,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := newsession(account, accessToken, accessTokenPayload.Expiry)
+	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
 
 	util.JsonResponse(w, res)
 }
@@ -384,7 +386,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, config util.Config, 
 		return
 	}
 
-	res := newsession(newAccount, accessToken, accessTokenPayload.Expiry)
+	res := newsession(newAccount, accessToken, refreshToken, accessTokenPayload.Expiry)
 
 	util.JsonResponse(w, res)
 }

@@ -30,6 +30,12 @@ type AccountSession struct {
 	ClientIp       string    `json:"client_ip"`
 }
 
+type EmailVerification struct {
+	Code   string    `json:"code"`
+	Email  string    `json:"email"`
+	Expiry time.Time `json:"expiry"`
+}
+
 type Folder struct {
 	FolderID               string         `json:"folder_id"`
 	AccountID              int64          `json:"account_id"`
