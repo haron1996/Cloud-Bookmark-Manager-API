@@ -35,6 +35,8 @@ func Router() *chi.Mux {
 	r.Route("/public", func(r chi.Router) {
 		r.Post("/checkIfIsAuthenticated", h.CheckIfIsAuthenticated)
 
+		r.Post("/continueWithGoogle", h.ContinueWithGoogle)
+
 		r.Post("/refreshToken", h.RefreshToken)
 
 		r.Post("/sendOTP", h.SendOTP)

@@ -267,8 +267,6 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 
 	wg.Wait()
 
-	log.Printf("REQUEST DETAILS: %v", req)
-
 	q := sqlc.New(h.db)
 
 	email := req.Email
@@ -278,8 +276,6 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 		log.Println(err)
 		return
 	}
-
-	log.Printf("REQUEST EMAIL: %v", email)
 
 	existingAccount, err := q.GetAccountByEmail(context.Background(), email)
 	if err != nil {
@@ -297,6 +293,13 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 			}
 
 			createAccount(createAccountParams, q, w, config, h)
+
+			if err := q.UpdateAccountEmailVerificationStatus(context.Background(), createAccountParams.Email); err != nil {
+				log.Println(err)
+				util.Response(w, "something went wrong", http.StatusInternalServerError)
+				return
+			}
+
 			return
 		default:
 			ErrorInternalServerError(w, err)
@@ -305,8 +308,6 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 	}
 
 	if existingAccount != (sqlc.Account{}) {
-		log.Printf("EXISTING ACCOUNT: %v", existingAccount)
-		log.Printf("EXISTING ACCOUNT ID: %v", existingAccount.ID)
 		loginUser(existingAccount, w, config, h)
 	}
 }
