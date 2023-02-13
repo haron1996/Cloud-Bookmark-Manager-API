@@ -17,7 +17,6 @@ require (
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.0
 	github.com/mailgun/mailgun-go/v4 v4.8.1
-	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.1
 	github.com/nats-io/nats.go v1.21.0
 	github.com/spf13/viper v1.12.0

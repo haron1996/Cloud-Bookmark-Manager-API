@@ -1,0 +1,1 @@
+- access postgress: sudo su postgres ... psql

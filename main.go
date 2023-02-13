@@ -21,7 +21,5 @@ func main() {
 		Handler: router.Router(),
 	}
 
-	log.Printf("server running on port %s...", server.Addr)
-
 	log.Fatal(server.ListenAndServe())
 }

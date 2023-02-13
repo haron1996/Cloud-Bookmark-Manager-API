@@ -30,6 +30,12 @@ type AccountSession struct {
 	ClientIp       string    `json:"client_ip"`
 }
 
+type Contact struct {
+	ID          int64  `json:"id"`
+	Account     int64  `json:"account"`
+	MessageBody string `json:"message_body"`
+}
+
 type EmailVerification struct {
 	Code   string    `json:"code"`
 	Email  string    `json:"email"`

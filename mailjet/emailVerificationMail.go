@@ -8,6 +8,20 @@ import (
 	"github.com/mailjet/mailjet-apiv3-go/v4"
 )
 
+type Mail struct {
+	Email string `json:"to_email"`
+	Name  string `json:"to_name"`
+	Code  string `json:"code"`
+}
+
+func NewMail(email, name, code string) *Mail {
+	return &Mail{
+		Email: email,
+		Name:  name,
+		Code:  code,
+	}
+}
+
 func (m Mail) SendEmailVificationMail() {
 	config, err := util.LoadConfig(".")
 	if err != nil {
@@ -40,5 +54,4 @@ func (m Mail) SendEmailVificationMail() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }

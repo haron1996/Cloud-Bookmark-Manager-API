@@ -277,7 +277,6 @@ func (h *BaseHandler) CreateChildFolder(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *BaseHandler) GetRootFolders(w http.ResponseWriter, r *http.Request) {
-
 	account_id := chi.URLParam(r, "accountID")
 
 	log.Printf("ACCOUNT ID: %s", account_id)

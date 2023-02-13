@@ -10,7 +10,6 @@ import (
 )
 
 func Router() *chi.Mux {
-
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -34,7 +33,6 @@ func Router() *chi.Mux {
 
 	// public routes go here
 	r.Route("/public", func(r chi.Router) {
-
 		r.Post("/checkIfIsAuthenticated", h.CheckIfIsAuthenticated)
 
 		r.Post("/refreshToken", h.RefreshToken)
@@ -49,7 +47,6 @@ func Router() *chi.Mux {
 			r.Get("/getAllAccounts", h.GetAllAccounts)
 			r.Post("/signin", h.SignIn)
 		})
-
 	})
 
 	// private routes ie they require authenticated calls
@@ -90,6 +87,8 @@ func Router() *chi.Mux {
 			r.Get("/get_folder_links/{accountID}/{folderID}", h.GetFolderLinks)
 			r.Get("/searchLinks/{query}", h.SearchLinks)
 		})
+
+		r.Post("/contactSupport", h.ContactSupport)
 	})
 
 	return r
