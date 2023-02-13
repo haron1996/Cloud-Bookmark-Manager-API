@@ -294,12 +294,6 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 
 			createAccount(createAccountParams, q, w, config, h)
 
-			if err := q.UpdateAccountEmailVerificationStatus(context.Background(), createAccountParams.Email); err != nil {
-				log.Println(err)
-				util.Response(w, "something went wrong", http.StatusInternalServerError)
-				return
-			}
-
 			return
 		default:
 			ErrorInternalServerError(w, err)
@@ -325,6 +319,12 @@ func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWr
 			ErrorInternalServerError(w, err)
 			return
 		}
+	}
+
+	if err := q.UpdateAccountEmailVerificationStatus(context.Background(), arg.Email); err != nil {
+		log.Println(err)
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		return
 	}
 
 	loginUser(account, w, config, h)
