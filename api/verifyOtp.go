@@ -140,6 +140,18 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refreshTokenCookie := http.Cookie{
+		Name:     "refresh_token_cookie",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  refreshTokenPayload.Expiry,
+		Secure:   true,
+		SameSite: http.SameSite(http.SameSiteStrictMode),
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, &refreshTokenCookie)
+
 	createAccountSessionParams := sqlc.CreateAccountSessionParams{
 		RefreshTokenID: refreshTokenPayload.ID,
 		AccountID:      account.ID,

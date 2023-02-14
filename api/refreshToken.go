@@ -3,11 +3,9 @@ package api
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -31,53 +29,59 @@ func (s refreshToken) Validate(reqValidationChan chan error) error {
 }
 
 func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	body := json.NewDecoder(r.Body)
-
-	body.DisallowUnknownFields()
-
-	var req refreshToken
-
-	err := body.Decode(&req)
+	refreshTC, err := r.Cookie("refresh_token_cookie")
 	if err != nil {
-		if e, ok := err.(*json.SyntaxError); ok {
-			log.Printf("syntax error at byte offset %d", e.Offset)
-			util.Response(w, internalServerError, http.StatusInternalServerError)
-			return
-		} else {
-			log.Printf("error decoding request body to struct: %v", err)
-			util.Response(w, badRequest, http.StatusBadRequest)
-			return
-		}
+		log.Println(err)
+		return
 	}
 
-	reqValidationChan := make(chan error, 1)
+	// body := json.NewDecoder(r.Body)
 
-	var wg sync.WaitGroup
+	// body.DisallowUnknownFields()
 
-	wg.Add(1)
+	// var req refreshToken
 
-	go func() {
-		defer wg.Done()
+	// err = body.Decode(&req)
+	// if err != nil {
+	// 	if e, ok := err.(*json.SyntaxError); ok {
+	// 		log.Printf("syntax error at byte offset %d", e.Offset)
+	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
+	// 		return
+	// 	} else {
+	// 		log.Printf("error decoding request body to struct: %v", err)
+	// 		util.Response(w, badRequest, http.StatusBadRequest)
+	// 		return
+	// 	}
+	// }
 
-		req.Validate(reqValidationChan)
-	}()
+	// reqValidationChan := make(chan error, 1)
 
-	requestValidationErr := <-reqValidationChan
-	if requestValidationErr != nil {
-		if e, ok := requestValidationErr.(validation.InternalError); ok {
-			log.Println(e)
-			util.Response(w, internalServerError, http.StatusInternalServerError)
-			return
-		} else {
-			log.Println(requestValidationErr)
-			util.Response(w, requestValidationErr.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
+	// var wg sync.WaitGroup
 
-	wg.Wait()
+	// wg.Add(1)
 
-	payload, err := auth.VerifyToken(req.RefreshToken)
+	// go func() {
+	// 	defer wg.Done()
+
+	// 	req.Validate(reqValidationChan)
+	// }()
+
+	// requestValidationErr := <-reqValidationChan
+	// if requestValidationErr != nil {
+	// 	if e, ok := requestValidationErr.(validation.InternalError); ok {
+	// 		log.Println(e)
+	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
+	// 		return
+	// 	} else {
+	// 		log.Println(requestValidationErr)
+	// 		util.Response(w, requestValidationErr.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// }
+
+	// wg.Wait()
+
+	payload, err := auth.VerifyToken(refreshTC.Value)
 	if err != nil {
 		util.Response(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -117,6 +121,18 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refreshTokenCookie := http.Cookie{
+		Name:     "refresh_token_cookie",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  refreshTokenPayload.Expiry,
+		Secure:   true,
+		SameSite: http.SameSite(http.SameSiteStrictMode),
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, &refreshTokenCookie)
+
 	createAccountSessionParams := sqlc.CreateAccountSessionParams{
 		RefreshTokenID: refreshTokenPayload.ID,
 		AccountID:      account.ID,
@@ -153,6 +169,8 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
+
+	log.Printf("res: %v", res)
 
 	util.JsonResponse(w, res)
 }

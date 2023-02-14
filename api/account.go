@@ -369,17 +369,17 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, config util.Config, 
 		return
 	}
 
-	session := http.Cookie{
-		Name:     "session",
+	refreshTokenCookie := http.Cookie{
+		Name:     "refresh_token_cookie",
 		Value:    refreshToken,
-		Path:     "http://localhost:5000/public/refresh_token",
+		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,
 		Secure:   true,
 		SameSite: http.SameSite(http.SameSiteStrictMode),
 		HttpOnly: true,
 	}
 
-	http.SetCookie(w, &session)
+	http.SetCookie(w, &refreshTokenCookie)
 
 	newAccount, err := q.GetAccount(context.Background(), account.ID)
 	if err != nil {
