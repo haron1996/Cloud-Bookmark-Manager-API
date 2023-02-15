@@ -129,7 +129,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refreshTokenCookie := http.Cookie{
-		Name:     "refresh_token_cookie",
+		Name:     "refreshTokenCookie",
 		Value:    refreshToken,
 		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,

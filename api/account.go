@@ -185,18 +185,6 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// refreshTokenCookie := http.Cookie{
-	// 	Name:     "refresh_token",
-	// 	Value:    refreshToken,
-	// 	Path:     "http://localhost:5000/public/refresh_token",
-	// 	Expires:  refreshTokenPayload.Expiry,
-	// 	Secure:   true,
-	// 	SameSite: http.SameSite(http.SameSiteStrictMode),
-	// 	HttpOnly: true,
-	// }
-
-	// http.SetCookie(w, &refreshTokenCookie)
-
 	account, err = q.GetAccount(context.Background(), account.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -370,7 +358,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, config util.Config, 
 	}
 
 	refreshTokenCookie := http.Cookie{
-		Name:     "refresh_token_cookie",
+		Name:     "refreshTokenCookie",
 		Value:    refreshToken,
 		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,

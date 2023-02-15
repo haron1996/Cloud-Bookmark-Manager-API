@@ -22,7 +22,6 @@ type getLinksAndFoldersResponse struct {
 }
 
 func newResponse(folders []returnFolder, links []sqlc.Link) *getLinksAndFoldersResponse {
-
 	return &getLinksAndFoldersResponse{
 		Folders: folders,
 		Links:   links,
@@ -58,7 +57,6 @@ func newReturnedFolder(f sqlc.Folder) returnFolder {
 }
 
 func (h *BaseHandler) GetLinksAndFolders(w http.ResponseWriter, r *http.Request) {
-
 	folderID := chi.URLParam(r, "folderID")
 
 	accountID := chi.URLParam(r, "accountID")

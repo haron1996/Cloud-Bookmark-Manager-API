@@ -8,80 +8,21 @@ import (
 	"net/http"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/jackc/pgconn"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
-type refreshToken struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-func (s refreshToken) Validate(reqValidationChan chan error) error {
-	returnVal := validation.ValidateStruct(&s,
-		validation.Field(&s.RefreshToken, validation.Required.Error("refresh token required")),
-	)
-	reqValidationChan <- returnVal
-
-	return returnVal
-}
-
 func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	refreshTC, err := r.Cookie("refresh_token_cookie")
+	c, err := r.Cookie("refreshTokenCookie")
 	if err != nil {
 		log.Println(err)
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
-	// body := json.NewDecoder(r.Body)
-
-	// body.DisallowUnknownFields()
-
-	// var req refreshToken
-
-	// err = body.Decode(&req)
-	// if err != nil {
-	// 	if e, ok := err.(*json.SyntaxError); ok {
-	// 		log.Printf("syntax error at byte offset %d", e.Offset)
-	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
-	// 		return
-	// 	} else {
-	// 		log.Printf("error decoding request body to struct: %v", err)
-	// 		util.Response(w, badRequest, http.StatusBadRequest)
-	// 		return
-	// 	}
-	// }
-
-	// reqValidationChan := make(chan error, 1)
-
-	// var wg sync.WaitGroup
-
-	// wg.Add(1)
-
-	// go func() {
-	// 	defer wg.Done()
-
-	// 	req.Validate(reqValidationChan)
-	// }()
-
-	// requestValidationErr := <-reqValidationChan
-	// if requestValidationErr != nil {
-	// 	if e, ok := requestValidationErr.(validation.InternalError); ok {
-	// 		log.Println(e)
-	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
-	// 		return
-	// 	} else {
-	// 		log.Println(requestValidationErr)
-	// 		util.Response(w, requestValidationErr.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// }
-
-	// wg.Wait()
-
-	payload, err := auth.VerifyToken(refreshTC.Value)
+	payload, err := auth.VerifyToken(c.Value)
 	if err != nil {
 		util.Response(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -122,7 +63,7 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refreshTokenCookie := http.Cookie{
-		Name:     "refresh_token_cookie",
+		Name:     "refreshTokenCookie",
 		Value:    refreshToken,
 		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,
@@ -169,8 +110,6 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
-
-	log.Printf("res: %v", res)
 
 	util.JsonResponse(w, res)
 }
