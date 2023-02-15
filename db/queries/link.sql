@@ -41,3 +41,8 @@ SELECT *
 FROM link
 WHERE link_title ILIKE $1 AND account_id = $2 AND deleted_at IS NULL
 ORDER BY added_at DESC;
+
+-- name: GetLink :one
+SELECT * FROM link
+WHERE link_id = $1
+LIMIT 1;

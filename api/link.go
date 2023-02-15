@@ -25,7 +25,6 @@ import (
 )
 
 func (h *BaseHandler) GetRootLinks(w http.ResponseWriter, r *http.Request) {
-
 	account_id := chi.URLParam(r, "accountID")
 
 	payload := r.Context().Value("payload").(*auth.PayLoad)
@@ -71,7 +70,6 @@ func (u URL) Validate(requestVaidatinChan chan error) error {
 }
 
 func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
-
 	rBody := json.NewDecoder(r.Body)
 
 	rBody.DisallowUnknownFields()
@@ -552,7 +550,6 @@ func (r restoreLinksRequest) Validate(requestValidationChan chan error) error {
 }
 
 func (h *BaseHandler) RestoreLinksFromTrash(w http.ResponseWriter, r *http.Request) {
-
 	body := json.NewDecoder(r.Body)
 
 	body.DisallowUnknownFields()
@@ -623,7 +620,6 @@ func (d deleteLinksForeverRequest) Validate(requestValidationChan chan error) er
 }
 
 func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request) {
-
 	body := json.NewDecoder(r.Body)
 
 	body.DisallowUnknownFields()
@@ -659,7 +655,33 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 	var links []sqlc.Link
 
 	for _, linkID := range req.LinkIDS {
-		l, err := q.DeleteLinkForever(context.Background(), linkID)
+		// get link
+		link, err := q.GetLink(context.Background(), linkID)
+		if err != nil {
+			log.Println(err)
+			util.Response(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+
+		linkScreenshotKey := strings.Split(link.LinkThumbnail, "/")[5]
+
+		linkFaviconKey := strings.Split(link.LinkFavicon, "/")[5]
+
+		log.Println(linkScreenshotKey, linkFaviconKey)
+
+		if err := util.DeleteFileFromBucket("/screenshots", linkScreenshotKey); err != nil {
+			log.Printf("could not delete screenshot from spaces %v", err)
+			util.Response(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+
+		if err := util.DeleteFileFromBucket("/favicons", linkFaviconKey); err != nil {
+			log.Printf("could not delete favicon from spaces %v", err)
+			util.Response(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+
+		l, err := q.DeleteLinkForever(context.Background(), link.LinkID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
