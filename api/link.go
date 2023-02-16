@@ -100,6 +100,7 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var host string
+	var urlToOpen string
 
 	if strings.Contains(req.URL, "?") {
 		u, err := url.ParseRequestURI(req.URL)
@@ -117,7 +118,17 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		host = parsedUrl.Host
+		log.Printf("parsed url %v", parsedUrl)
+
+		if parsedUrl.Scheme == "https" {
+			host = parsedUrl.Host
+
+			urlToOpen = req.URL
+		} else {
+			host = parsedUrl.String()
+
+			urlToOpen = fmt.Sprintf(`https://%s`, req.URL)
+		}
 
 	}
 
@@ -161,7 +172,7 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 
 	browser := rod.New().ControlURL(u).MustConnect()
 
-	page := browser.MustPage(req.URL).MustWaitLoad()
+	page := browser.MustPage(urlToOpen).MustWaitLoad()
 
 	defer browser.MustClose()
 
@@ -666,8 +677,6 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 		linkScreenshotKey := strings.Split(link.LinkThumbnail, "/")[5]
 
 		linkFaviconKey := strings.Split(link.LinkFavicon, "/")[5]
-
-		log.Println(linkScreenshotKey, linkFaviconKey)
 
 		if err := util.DeleteFileFromBucket("/screenshots", linkScreenshotKey); err != nil {
 			log.Printf("could not delete screenshot from spaces %v", err)
