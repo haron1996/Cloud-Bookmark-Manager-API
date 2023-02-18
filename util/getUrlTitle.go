@@ -5,7 +5,6 @@ import (
 )
 
 func GetUrlTitle(page *rod.Page, urlTitleChan chan string) {
-
 	pageHasTitle, title, _ := page.Has("title")
 
 	if pageHasTitle {

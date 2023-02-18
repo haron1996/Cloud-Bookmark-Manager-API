@@ -109,7 +109,16 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		host = u.Host
+		if u.Scheme == "https" {
+
+			host = u.Host
+
+			urlToOpen = fmt.Sprintf(`%v`, u)
+		} else {
+
+			util.Response(w, "invalid url", http.StatusBadRequest)
+			return
+		}
 
 	} else {
 		parsedUrl, err := url.Parse(req.URL)
@@ -117,8 +126,6 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 			ErrorInternalServerError(w, err)
 			return
 		}
-
-		log.Printf("parsed url %v", parsedUrl)
 
 		if parsedUrl.Scheme == "https" {
 			host = parsedUrl.Host
@@ -134,7 +141,6 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get(fmt.Sprintf("https://www.google.com/s2/favicons?domain=%v&sz=64", req.URL))
 	if err != nil {
-		log.Println(err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}

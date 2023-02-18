@@ -5,6 +5,5 @@ import (
 )
 
 func RodGetUrlScreenshot(page *rod.Page) {
-
 	page.MustScreenshot("a.png")
 }
