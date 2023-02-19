@@ -115,7 +115,6 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 
 			urlToOpen = fmt.Sprintf(`%v`, u)
 		} else {
-
 			util.Response(w, "invalid url", http.StatusBadRequest)
 			return
 		}
