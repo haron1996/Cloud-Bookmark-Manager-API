@@ -43,7 +43,7 @@ func Router() *chi.Mux {
 
 		r.Post("/verifyOTP", h.VerifyOTP)
 
-		r.Post("getUserMessages", h.GetAllUserMessages)
+		r.Post("/getUserMessages", h.GetAllUserMessages)
 
 		r.Route("/account", func(r chi.Router) {
 			r.Post("/", h.ContinueWithGoogle)
