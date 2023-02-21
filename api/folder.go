@@ -63,6 +63,7 @@ func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer wg.Done()
+
 		req.validate(reqValidationChan)
 	}()
 
