@@ -16,7 +16,7 @@ import (
 Middleware performs some specific function on the HTTP request or response at a specific stage in the HTTP pipeline before or after the user defined controller. Middleware is a design pattern to eloquently add cross cutting concerns like logging, handling authentication without having many code contact points.
 */
 
-func ReturnVerifiedUserToken() func(next http.Handler) http.Handler {
+func AuthenticateRequest() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			payload, err := getAndVerifyToken(r)

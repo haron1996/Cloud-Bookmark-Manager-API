@@ -15,12 +15,12 @@ import (
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
-type createRootFolderRequest struct {
+type createFolderRequest struct {
 	FolderName string `json:"folder_name"`
 	FolderID   string `json:"parent_folder_id"`
 }
 
-func (s createRootFolderRequest) validate() error {
+func (s createFolderRequest) validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.FolderName, validation.Required.When(s.FolderName == "").Error("folder name is required"), validation.Match(regexp.MustCompile("^[^?[\\]{}|\\\\`./!@#$%^&*()_-]+$")).Error("folder name must not have special characters"), validation.Length(1, 100).Error("folder name must be at least 1 character long")),
 	)
@@ -28,24 +28,24 @@ func (s createRootFolderRequest) validate() error {
 
 type RequestBody struct {
 	PayLoad *auth.PayLoad
-	Body    *createRootFolderRequest
+	Body    *createFolderRequest
 }
 
-func newRequestBody(p auth.PayLoad, b createRootFolderRequest) *RequestBody {
+func newRequestBody(p auth.PayLoad, b createFolderRequest) *RequestBody {
 	return &RequestBody{
 		PayLoad: &p,
 		Body:    &b,
 	}
 }
 
-func ReturnAuthorizedUserToken() func(next http.Handler) http.Handler {
+func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			body := json.NewDecoder(r.Body)
 
 			body.DisallowUnknownFields()
 
-			var req createRootFolderRequest
+			var req createFolderRequest
 
 			if err := body.Decode(&req); err != nil {
 				if e, ok := err.(*json.SyntaxError); ok {

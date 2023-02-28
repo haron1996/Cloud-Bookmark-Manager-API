@@ -1453,3 +1453,7 @@ func (h *BaseHandler) DeleteFoldersForever(w http.ResponseWriter, r *http.Reques
 
 	util.JsonResponse(w, folders)
 }
+
+func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
+	// invite users to collection
+}

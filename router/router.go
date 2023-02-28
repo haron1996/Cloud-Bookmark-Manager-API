@@ -55,7 +55,7 @@ func Router() *chi.Mux {
 
 	// private routes ie they require authenticated calls
 	r.Route("/private", func(r chi.Router) {
-		r.Use(cm.ReturnVerifiedUserToken())
+		r.Use(cm.AuthenticateRequest())
 
 		r.Get("/getLinksAndFolders/{accountID}/{folderID}", h.GetLinksAndFolders)
 
@@ -63,7 +63,7 @@ func Router() *chi.Mux {
 
 		r.Route("/folder", func(r chi.Router) {
 			r.Route("/create", func(r chi.Router) {
-				r.Use(cm.ReturnAuthorizedUserToken())
+				r.Use(cm.AuthorizeCreateFolderRequest())
 				r.Post("/", h.CreateFolder)
 			})
 			// r.Post("/create", h.CreateFolder)
