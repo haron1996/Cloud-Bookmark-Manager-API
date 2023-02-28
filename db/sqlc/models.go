@@ -6,8 +6,52 @@ package sqlc
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 )
+
+type CollectionAccessLevel string
+
+const (
+	CollectionAccessLevelView CollectionAccessLevel = "view"
+	CollectionAccessLevelEdit CollectionAccessLevel = "edit"
+)
+
+func (e *CollectionAccessLevel) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CollectionAccessLevel(s)
+	case string:
+		*e = CollectionAccessLevel(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CollectionAccessLevel: %T", src)
+	}
+	return nil
+}
+
+type NullCollectionAccessLevel struct {
+	CollectionAccessLevel CollectionAccessLevel
+	Valid                 bool // Valid is true if CollectionAccessLevel is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCollectionAccessLevel) Scan(value interface{}) error {
+	if value == nil {
+		ns.CollectionAccessLevel, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CollectionAccessLevel.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCollectionAccessLevel) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CollectionAccessLevel), nil
+}
 
 type Account struct {
 	ID              int64          `json:"id"`
@@ -70,4 +114,21 @@ type Link struct {
 	UpdatedAt              time.Time      `json:"updated_at"`
 	DeletedAt              sql.NullTime   `json:"deleted_at"`
 	TextsearchableIndexCol interface{}    `json:"textsearchable_index_col"`
+}
+
+type PublicSharedCollection struct {
+	CollectionID          string                `json:"collection_id"`
+	CollectionPassword    string                `json:"collection_password"`
+	CollectionSharedBy    int64                 `json:"collection_shared_by"`
+	CollectionSharedAt    time.Time             `json:"collection_shared_at"`
+	CollectionShareExpiry sql.NullTime          `json:"collection_share_expiry"`
+	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`
+}
+
+type SharedCollection struct {
+	CollectionID          string                `json:"collection_id"`
+	CollectionSharedBy    int64                 `json:"collection_shared_by"`
+	CollectionSharedWith  int64                 `json:"collection_shared_with"`
+	CollectionSharedAt    time.Time             `json:"collection_shared_at"`
+	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`
 }

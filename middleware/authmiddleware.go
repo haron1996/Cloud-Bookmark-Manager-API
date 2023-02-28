@@ -2,27 +2,23 @@ package middleware
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 	"net/http"
 	"strings"
 
-	"github.com/jackc/pgconn"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
-	"github.com/kwandapchumba/go-bookmark-manager/db/connection"
-	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
+	dbutils "github.com/kwandapchumba/go-bookmark-manager/db/dbutils"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
 /*
 Middleware performs some specific function on the HTTP request or response at a specific stage in the HTTP pipeline before or after the user defined controller. Middleware is a design pattern to eloquently add cross cutting concerns like logging, handling authentication without having many code contact points.
 */
-func ReturnVerifiedUserToken() func(next http.Handler) http.Handler {
 
+func ReturnVerifiedUserToken() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-
 			payload, err := getAndVerifyToken(r)
 			if err != nil {
 				log.Println(err)
@@ -31,26 +27,12 @@ func ReturnVerifiedUserToken() func(next http.Handler) http.Handler {
 			}
 
 			if payload != nil {
-				q := sqlc.New(connection.ConnectDB())
 
-				account, err := q.GetAccount(context.Background(), payload.AccountID)
+				account, err := dbutils.ReturnAccount(context.Background(), payload.AccountID)
 				if err != nil {
-					var pgErr *pgconn.PgError
-
-					if errors.As(err, &pgErr) {
-						log.Println(pgErr)
-						err := errors.New("something went wrong")
-						util.Response(w, err.Error(), 500)
-					} else if errors.Is(err, sql.ErrNoRows) {
-						err := errors.New("user with id not found")
-						log.Println(err)
-						util.Response(w, err.Error(), http.StatusUnauthorized)
-						return
-					} else {
-						log.Println(err)
-						err := errors.New("something went wrong")
-						util.Response(w, err.Error(), 500)
-					}
+					log.Println(err)
+					util.Response(w, errors.New("unauthorized").Error(), http.StatusUnauthorized)
+					return
 				}
 
 				if payload.IssuedAt.Unix() != account.LastLogin.Unix() {

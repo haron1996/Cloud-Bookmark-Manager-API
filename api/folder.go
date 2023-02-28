@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
+	"github.com/kwandapchumba/go-bookmark-manager/middleware"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
@@ -36,60 +37,70 @@ func (s createRootFolderRequest) validate(reqValidationChan chan error) error {
 }
 
 func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
-	rBody := json.NewDecoder(r.Body)
+	// log.Printf("authorized payload: %v", r.Context().Value("authorizedPayload").(*auth.PayLoad))
 
-	rBody.DisallowUnknownFields()
+	requestBody := r.Context().Value("myValues").(*middleware.RequestBody).Body
 
-	var req createRootFolderRequest
+	authorizedPayload := r.Context().Value("myValues").(*middleware.RequestBody).PayLoad
 
-	err := rBody.Decode(&req)
-	if err != nil {
-		if e, ok := err.(*json.SyntaxError); ok {
-			log.Printf("syntax error at byte offset %d", e.Offset)
-			util.Response(w, internalServerError, http.StatusInternalServerError)
-			return
-		} else {
-			log.Printf("error decoding request body to struct: %v", err)
-			util.Response(w, badRequest, http.StatusBadRequest)
-			return
-		}
-	}
+	// log.Println(rB)
 
-	reqValidationChan := make(chan error, 1)
+	// rBody := json.NewDecoder(r.Body)
 
-	var wg sync.WaitGroup
+	// rBody.DisallowUnknownFields()
 
-	wg.Add(1)
+	// var req createRootFolderRequest
 
-	go func() {
-		defer wg.Done()
+	// err := rBody.Decode(&req)
+	// if err != nil {
+	// 	if e, ok := err.(*json.SyntaxError); ok {
+	// 		log.Printf("syntax error at byte offset %d", e.Offset)
+	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
+	// 		return
+	// 	} else {
+	// 		log.Printf("error decoding request body to struct: %v", err)
+	// 		util.Response(w, badRequest, http.StatusBadRequest)
+	// 		return
+	// 	}
+	// }
 
-		req.validate(reqValidationChan)
-	}()
+	// reqValidationChan := make(chan error, 1)
 
-	requestValidationErr := <-reqValidationChan
-	if requestValidationErr != nil {
-		if e, ok := requestValidationErr.(validation.InternalError); ok {
-			log.Println(e)
-			util.Response(w, internalServerError, http.StatusInternalServerError)
-			return
-		} else {
-			log.Println(requestValidationErr)
-			util.Response(w, requestValidationErr.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
+	// var wg sync.WaitGroup
 
-	payload := r.Context().Value("payload").(*auth.PayLoad)
+	// wg.Add(1)
+
+	// go func() {
+	// 	defer wg.Done()
+
+	// 	req.validate(reqValidationChan)
+	// }()
+
+	// requestValidationErr := <-reqValidationChan
+	// if requestValidationErr != nil {
+	// 	if e, ok := requestValidationErr.(validation.InternalError); ok {
+	// 		log.Println(e)
+	// 		util.Response(w, internalServerError, http.StatusInternalServerError)
+	// 		return
+	// 	} else {
+	// 		log.Println(requestValidationErr)
+	// 		util.Response(w, requestValidationErr.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// }
+
+	// payload := r.Context().Value("payload").(*auth.PayLoad)
 
 	queries := sqlc.New(h.db)
 
-	if req.FolderID != "null" {
-		util.CreateChildFolder(context.Background(), queries, w, r, req.FolderName, req.FolderID, payload.AccountID)
+	if requestBody.FolderID != "null" {
+		util.CreateChildFolder(context.Background(), queries, w, r, requestBody.FolderName, requestBody.FolderID, authorizedPayload.AccountID)
 		return
 	}
 
 	stringChan := make(chan string, 1)
+
+	var wg sync.WaitGroup
 
 	wg.Add(1)
 
@@ -115,9 +126,9 @@ func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 
 	folderParams := sqlc.CreateFolderParams{
 		FolderID:    folderID,
-		FolderName:  req.FolderName,
+		FolderName:  requestBody.FolderName,
 		SubfolderOf: sql.NullString{},
-		AccountID:   payload.AccountID,
+		AccountID:   authorizedPayload.AccountID,
 		Path:        folderLabel,
 		Label:       folderLabel,
 	}

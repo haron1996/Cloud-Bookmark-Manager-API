@@ -62,7 +62,11 @@ func Router() *chi.Mux {
 		r.Get("/getFoldersAndLinksMovedToTrash/{accountID}", h.GetFoldersAndLinksMovedToTrash)
 
 		r.Route("/folder", func(r chi.Router) {
-			r.Post("/create", h.CreateFolder)
+			r.Route("/create", func(r chi.Router) {
+				r.Use(cm.ReturnAuthorizedUserToken())
+				r.Post("/", h.CreateFolder)
+			})
+			// r.Post("/create", h.CreateFolder)
 			r.Post("/new-child-folder", h.CreateChildFolder)
 			r.Patch("/star", h.StarFolders)
 			r.Patch("/unstar", h.UnstarFolders)
