@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/kwandapchumba/go-bookmark-manager/router"
-	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
 func main() {
@@ -18,12 +17,12 @@ func main() {
 
 	// log.Println(port)
 
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Fatal("cannot load config:", err)
-	}
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	log.Fatal("cannot load config:", err)
+	// }
 
-	log.Printf("config file successfully loaded as: %v", config)
+	// log.Printf("config file successfully loaded as: %v", config)
 
 	log.Println(os.Getenv("port"))
 
