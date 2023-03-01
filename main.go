@@ -9,10 +9,9 @@ import (
 )
 
 func main() {
-
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		log.Println(err)
+		log.Printf("failed to lead config with error: %v", err)
 		return
 	}
 
