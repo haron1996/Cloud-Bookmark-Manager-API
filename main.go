@@ -11,7 +11,7 @@ import (
 func main() {
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		log.Printf("failed to lead config with error: %v", err)
+		log.Printf("failed to load config with error: %v", err)
 		return
 	}
 
