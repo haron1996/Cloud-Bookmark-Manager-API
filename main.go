@@ -1,23 +1,33 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/kwandapchumba/go-bookmark-manager/router"
-	"github.com/kwandapchumba/go-bookmark-manager/util"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Fatal("cannot load config:", err)
-	}
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+	viper.AutomaticEnv()
 
-	log.Printf("config file successfully loaded as: %v", config)
+	port := fmt.Sprint(viper.Get("PORT"))
+
+	// log.Println(port)
+
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	log.Fatal("cannot load config:", err)
+	// }
+
+	// log.Printf("config file successfully loaded as: %v", config)
 
 	server := &http.Server{
-		Addr:    config.PORT,
+		// Addr:    config.PORT,
+		Addr:    port,
 		Handler: router.Router(),
 	}
 
