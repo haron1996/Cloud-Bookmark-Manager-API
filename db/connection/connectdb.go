@@ -10,7 +10,8 @@ import (
 )
 
 func ConnectDB() *sql.DB {
-	config, err := util.LoadConfig("/home/kibet/go/organized")
+	// config, err := util.LoadConfig("/home/kibet/go/organized")
+	config, err := util.LoadConfig(".")
 	if err != nil {
 		log.Println(err.Error())
 		return nil
