@@ -17,7 +17,7 @@ func main() {
 
 	// log.Println(port)
 
-	config, err := util.LoadConfig(".")
+	config, err := util.LoadConfig("/production/")
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
