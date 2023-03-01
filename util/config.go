@@ -25,7 +25,7 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path) // <- to work with Dockerfile setup
 	// viper.SetConfigName("config")
 	viper.SetConfigType("env")
-	viper.SetConfigFile("ENV")
+	viper.SetConfigFile(".ENV")
 	viper.AutomaticEnv()
 
 	err = viper.ReadInConfig()
