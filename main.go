@@ -15,6 +15,8 @@ func main() {
 		return
 	}
 
+	log.Printf("config file successfully loaded as: %v", config)
+
 	server := &http.Server{
 		Addr:    config.PORT,
 		Handler: router.Router(),
