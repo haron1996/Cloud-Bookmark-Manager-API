@@ -23,8 +23,8 @@ type Config struct {
 
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path) // <- to work with Dockerfile setup
-	viper.SetConfigName("")
-	viper.SetConfigType("env")
+	// viper.SetConfigName("")
+	// viper.SetConfigType("env")
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()
 
