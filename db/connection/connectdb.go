@@ -22,6 +22,8 @@ func ConnectDB() *sql.DB {
 		return nil
 	}
 
+	time.Sleep(1 * time.Second)
+
 	err = db.Ping()
 	if err != nil {
 		log.Println("db connection closed")
