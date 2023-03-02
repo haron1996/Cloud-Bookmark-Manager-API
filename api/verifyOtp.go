@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -115,36 +114,26 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// config, err := util.LoadConfig(".")
-	// if err != nil {
-	// 	log.Printf("failed to load config file with err: %v", err)
-	// 	util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Printf("failed to load config file with err: %v", err)
+		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if err = queries.DeleteEmailVerificationCode(context.Background(), account.Email); err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
-	accessTokenDuration, err := time.ParseDuration(os.Getenv("accessTokenDuration"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	refreshTokenDuration, err := time.ParseDuration(os.Getenv("refreshTokenDuration"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), accessTokenDuration)
+	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), config.Access_Token_Duration)
 	if err != nil {
 		log.Printf("failed to create access token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, refreshTokenDuration)
+	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, config.Refresh_Token_Duration)
 	if err != nil {
 		log.Printf("failed to create refresh token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)

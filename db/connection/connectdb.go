@@ -3,20 +3,20 @@ package connection
 import (
 	"database/sql"
 	"log"
-	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
 func ConnectDB() *sql.DB {
-	// config, err := util.LoadConfig(".")
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	return nil
-	// }
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Println(err.Error())
+		return nil
+	}
 
-	db, err := sql.Open("pgx", os.Getenv("dbString"))
+	db, err := sql.Open("pgx", config.DBString)
 	if err != nil {
 		log.Println(err)
 		return nil

@@ -1,1 +1,16 @@
 - access postgress: sudo su postgres ... psql
+
+viper modifications:
+    modified:   api/account.go --fixed
+	modified:   api/login.go --fixed
+	modified:   api/refreshToken.go --fixed
+	modified:   api/verifyOtp.go --fixed
+	modified:   auth/auth.go --fixed
+	modified:   db/connection/connectdb.go --fixed
+	modified:   mailjet/emailSupport.go --fixed
+	modified:   mailjet/emailVerificationMail.go --fixed
+	modified:   main.go --fixed
+	modified:   util/deleteFileFromBucket.go --fixed
+	modified:   util/saveFaviconToSpaces.go --fixed
+	modified:   util/uploadFavicon.go --fixed
+	modified:   util/uploadScreenshot.go --fixed

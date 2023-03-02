@@ -1,8 +1,9 @@
 package mailjet
 
 import (
-	"os"
+	"log"
 
+	"github.com/kwandapchumba/go-bookmark-manager/util"
 	"github.com/mailjet/mailjet-apiv3-go/v4"
 )
 
@@ -26,12 +27,12 @@ func (e EmailSupportRequest) NewEmailSupportMail(fromEmail string, fromName stri
 }
 
 func (m EmailSupportRequest) EmailSupport() error {
-	// config, err := util.LoadConfig(".")
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return err
-	// }
-	client := mailjet.NewMailjetClient(os.Getenv("mailJetApiKey"), os.Getenv("mailJetSecretKey"))
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	client := mailjet.NewMailjetClient(config.MailJetApiKey, config.MailJetSecretKey)
 
 	messagesInfo := []mailjet.InfoMessagesV31{
 		{
@@ -55,7 +56,7 @@ func (m EmailSupportRequest) EmailSupport() error {
 	}
 	messages := mailjet.MessagesV31{Info: messagesInfo}
 
-	_, err := client.SendMailV31(&messages)
+	_, err = client.SendMailV31(&messages)
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,11 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
+	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
 type PayLoad struct {
@@ -37,14 +37,12 @@ func CreateToken(accountID int64, issuedAt time.Time, duration time.Duration) (s
 
 	token.Set("payload", payload)
 
-	// config, err := util.LoadConfig(".")
-	// if err != nil {
-	// 	return "", nil, nil
-	// }
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		return "", nil, nil
+	}
 
-	secretKeyHex := os.Getenv("publicKeyHex")
-
-	secretKey, _ := paseto.NewV4AsymmetricSecretKeyFromHex(secretKeyHex)
+	secretKey, _ := paseto.NewV4AsymmetricSecretKeyFromHex(config.SecretKeyHex)
 
 	signed := token.V4Sign(secretKey, nil)
 
@@ -52,14 +50,12 @@ func CreateToken(accountID int64, issuedAt time.Time, duration time.Duration) (s
 }
 
 func VerifyToken(signed string) (*PayLoad, error) {
-	// config, err := util.LoadConfig(".")
-	// if err != nil {
-	// 	return nil, nil
-	// }
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		return nil, nil
+	}
 
-	publicKeyHex := os.Getenv("publicKeyHex")
-
-	publicKey, err := paseto.NewV4AsymmetricPublicKeyFromHex(publicKeyHex)
+	publicKey, err := paseto.NewV4AsymmetricPublicKeyFromHex(config.PublicKeyHex)
 	if err != nil {
 		err := errors.New("something went wrong")
 		return nil, err
