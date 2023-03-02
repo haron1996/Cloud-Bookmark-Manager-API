@@ -14,7 +14,7 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	log.Printf("config file successfully loaded as: %v", config)
+	// log.Printf("config file successfully loaded as: %v", config)
 
 	server := &http.Server{
 		Addr:    config.PORT,
