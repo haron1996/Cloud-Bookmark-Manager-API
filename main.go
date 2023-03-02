@@ -18,8 +18,6 @@ func main() {
 
 	setEnvs()
 
-	log.Println(os.Getenv("port"))
-
 	server := &http.Server{
 		// Addr: config.PORT,
 		Addr:    os.Getenv("port"),

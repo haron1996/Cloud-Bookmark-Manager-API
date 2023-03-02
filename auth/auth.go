@@ -2,11 +2,11 @@ package auth
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
-	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
 type PayLoad struct {
@@ -37,12 +37,12 @@ func CreateToken(accountID int64, issuedAt time.Time, duration time.Duration) (s
 
 	token.Set("payload", payload)
 
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		return "", nil, nil
-	}
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	return "", nil, nil
+	// }
 
-	secretKeyHex := config.SecretKeyHex
+	secretKeyHex := os.Getenv("publicKeyHex")
 
 	secretKey, _ := paseto.NewV4AsymmetricSecretKeyFromHex(secretKeyHex)
 
@@ -52,12 +52,12 @@ func CreateToken(accountID int64, issuedAt time.Time, duration time.Duration) (s
 }
 
 func VerifyToken(signed string) (*PayLoad, error) {
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		return nil, nil
-	}
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	return nil, nil
+	// }
 
-	publicKeyHex := config.PublicKeyHex
+	publicKeyHex := os.Getenv("publicKeyHex")
 
 	publicKey, err := paseto.NewV4AsymmetricPublicKeyFromHex(publicKeyHex)
 	if err != nil {

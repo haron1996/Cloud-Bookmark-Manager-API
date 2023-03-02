@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -140,21 +141,31 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	config, err := util.LoadConfig(".")
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	log.Printf("failed to load config file with err: %v", err)
+	// 	util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	accessTokenDuration, err := time.ParseDuration(os.Getenv("accessTokenDuration"))
 	if err != nil {
-		log.Printf("failed to load config file with err: %v", err)
-		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
-		return
+		log.Fatal(err)
 	}
 
-	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), config.Access_Token_Duration)
+	refreshTokenDuration, err := time.ParseDuration(os.Getenv("refreshTokenDuration"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), accessTokenDuration)
 	if err != nil {
 		log.Printf("failed to create access token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, config.Refresh_Token_Duration)
+	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, refreshTokenDuration)
 	if err != nil {
 		log.Printf("failed to create refresh token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
@@ -259,11 +270,11 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 
 	email := req.Email
 
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	// config, err := util.LoadConfig(".")
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
 
 	existingAccount, err := q.GetAccountByEmail(context.Background(), email)
 	if err != nil {
@@ -280,7 +291,7 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 				// Picture:  req.Picture,
 			}
 
-			createAccount(createAccountParams, q, w, config, h)
+			createAccount(createAccountParams, q, w, h)
 
 			return
 		default:
@@ -290,11 +301,11 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 	}
 
 	if existingAccount != (sqlc.Account{}) {
-		loginUser(existingAccount, w, config, h)
+		loginUser(existingAccount, w, h)
 	}
 }
 
-func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWriter, config util.Config, h *BaseHandler) {
+func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWriter, h *BaseHandler) {
 	account, err := q.NewAccount(context.Background(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -315,11 +326,21 @@ func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWr
 		return
 	}
 
-	loginUser(account, w, config, h)
+	loginUser(account, w, h)
 }
 
-func loginUser(account sqlc.Account, w http.ResponseWriter, config util.Config, h *BaseHandler) {
-	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now().UTC(), config.Access_Token_Duration)
+func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler) {
+	accessTokenDuration, err := time.ParseDuration(os.Getenv("accessTokenDuration"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	refreshTokenDuration, err := time.ParseDuration(os.Getenv("refreshTokenDuration"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now().UTC(), accessTokenDuration)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -337,7 +358,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, config util.Config, 
 	// 	return
 	// }
 
-	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, config.Refresh_Token_Duration)
+	refreshToken, refreshTokenPayload, err := auth.CreateToken(account.ID, accessTokenPayload.IssuedAt, refreshTokenDuration)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
