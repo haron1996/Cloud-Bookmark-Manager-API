@@ -1,4 +1,4 @@
-- access postgress: sudo su postgres ... psql
+- access postgress: sudo su postgres ... psql OR sudo -u postgres psql
 
 viper modifications:
     modified:   api/account.go --fixed
