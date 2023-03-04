@@ -45,6 +45,8 @@ func Router() *chi.Mux {
 
 		r.Get("/getUserMessages", h.GetAllUserMessages)
 
+		r.Get("/getLinksByAccountID/{accountID}", h.GetLinksByUserID)
+
 		r.Route("/account", func(r chi.Router) {
 			r.Post("/", h.ContinueWithGoogle)
 			r.Post("/create", h.NewAccount)

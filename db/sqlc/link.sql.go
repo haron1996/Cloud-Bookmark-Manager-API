@@ -155,6 +155,47 @@ func (q *Queries) GetLink(ctx context.Context, linkID string) (Link, error) {
 	return i, err
 }
 
+const getLinksByUserID = `-- name: GetLinksByUserID :many
+SELECT link_id, link_title, link_thumbnail, link_favicon, link_hostname, link_url, link_notes, account_id, folder_id, added_at, updated_at, deleted_at, textsearchable_index_col FROM link WHERE account_id = $1
+`
+
+func (q *Queries) GetLinksByUserID(ctx context.Context, accountID int64) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, getLinksByUserID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Link
+	for rows.Next() {
+		var i Link
+		if err := rows.Scan(
+			&i.LinkID,
+			&i.LinkTitle,
+			&i.LinkThumbnail,
+			&i.LinkFavicon,
+			&i.LinkHostname,
+			&i.LinkUrl,
+			&i.LinkNotes,
+			&i.AccountID,
+			&i.FolderID,
+			&i.AddedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.TextsearchableIndexCol,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLinksMovedToTrash = `-- name: GetLinksMovedToTrash :many
 SELECT link_id, link_title, link_thumbnail, link_favicon, link_hostname, link_url, link_notes, account_id, folder_id, added_at, updated_at, deleted_at, textsearchable_index_col FROM link WHERE deleted_at IS NOT NULL AND account_id = $1 ORDER BY deleted_at DESC
 `

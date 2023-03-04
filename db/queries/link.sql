@@ -46,3 +46,6 @@ ORDER BY added_at DESC;
 SELECT * FROM link
 WHERE link_id = $1
 LIMIT 1;
+
+-- name: GetLinksByUserID :many
+SELECT * FROM link WHERE account_id = $1;

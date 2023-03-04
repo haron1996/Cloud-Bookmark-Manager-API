@@ -723,3 +723,29 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 
 	util.JsonResponse(w, links)
 }
+
+func (h *BaseHandler) GetLinksByUserID(w http.ResponseWriter, r *http.Request) {
+	accountIDString := chi.URLParam(r, "accountID")
+
+	accountID, err := strconv.ParseInt(accountIDString, 10, 64)
+	if err != nil {
+		log.Printf("could parse string to int64: %v", err)
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	q := sqlc.New(h.db)
+
+	links, err := q.GetLinksByUserID(context.Background(), accountID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			util.Response(w, "no links found", http.StatusNotFound)
+		} else {
+			log.Printf("could not get links by user id: %v", err)
+			util.Response(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	util.JsonResponse(w, links)
+}
