@@ -42,9 +42,5 @@ func DeleteFileFromBucket(bucket string, key string) error {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

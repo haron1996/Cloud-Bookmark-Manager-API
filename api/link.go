@@ -22,6 +22,7 @@ import (
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
+	"github.com/kwandapchumba/go-bookmark-manager/vultr"
 )
 
 func (h *BaseHandler) GetRootLinks(w http.ResponseWriter, r *http.Request) {
@@ -147,13 +148,6 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 	var favicon string
 
 	if err := util.DownloaFavicon(resp.Header.Get("content-location"), "favicon.ico"); err != nil {
-		// if err.Error() == "received non 200 response code" {
-		// 	favicon = resp.Header.Get("content-location")
-		// } else {
-		// 	log.Printf("failed to download favicon with err: %v", err)
-		// 	util.Response(w, "something went wrong", http.StatusInternalServerError)
-		// 	return
-		// }
 		favicon = resp.Header.Get("content-location")
 	}
 
@@ -166,7 +160,9 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			defer wg.Done()
 
-			util.UploadFavicon(urlFaviconChan)
+			vultr.UploadLinkFavicon(urlFaviconChan)
+
+			// util.UploadFavicon(urlFaviconChan)
 		}()
 
 		favicon = <-urlFaviconChan
@@ -242,11 +238,13 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer wg.Done()
 
-		if err := util.UploadScreenshot(urlScreenshotChan); err != nil {
-			log.Printf("failed to get url screenshot: %v", err)
-			util.Response(w, "something went wrong", http.StatusInternalServerError)
-			return
-		}
+		vultr.UploadLinkThumbnail(urlScreenshotChan)
+
+		// if err := util.UploadScreenshot(urlScreenshotChan); err != nil {
+		// 	log.Printf("failed to get url screenshot: %v", err)
+		// 	util.Response(w, "something went wrong", http.StatusInternalServerError)
+		// 	return
+		// }
 	}()
 
 	urlScreenshotLink := <-urlScreenshotChan
@@ -679,21 +677,31 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		linkScreenshotKey := strings.Split(link.LinkThumbnail, "/")[5]
+		tn := strings.Split(link.LinkThumbnail, "/")
 
-		linkFaviconKey := strings.Split(link.LinkFavicon, "/")[5]
+		key := (tn[len(tn)-1])
 
-		if err := util.DeleteFileFromBucket("/screenshots", linkScreenshotKey); err != nil {
-			log.Printf("could not delete screenshot from spaces %v", err)
-			util.Response(w, "something went wrong", http.StatusInternalServerError)
-			return
-		}
+		// log.Println(key)
 
-		if err := util.DeleteFileFromBucket("/favicons", linkFaviconKey); err != nil {
-			log.Printf("could not delete favicon from spaces %v", err)
-			util.Response(w, "something went wrong", http.StatusInternalServerError)
-			return
-		}
+		// linkScreenshotKey := strings.Split(link.LinkThumbnail, "/")[4]
+
+		// linkFaviconKey := strings.Split(link.LinkFavicon, "/")[4]
+
+		vultr.DeleteObjectFromBucket("/link-thumbnails", key)
+
+		vultr.DeleteObjectFromBucket("/link-favicons", key)
+
+		// if err := util.DeleteFileFromBucket("/screenshots", linkScreenshotKey); err != nil {
+		// 	log.Printf("could not delete screenshot from spaces %v", err)
+		// 	util.Response(w, "something went wrong", http.StatusInternalServerError)
+		// 	return
+		// }
+
+		// if err := util.DeleteFileFromBucket("/favicons", linkFaviconKey); err != nil {
+		// 	log.Printf("could not delete favicon from spaces %v", err)
+		// 	util.Response(w, "something went wrong", http.StatusInternalServerError)
+		// 	return
+		// }
 
 		l, err := q.DeleteLinkForever(context.Background(), link.LinkID)
 		if err != nil {

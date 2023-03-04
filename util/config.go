@@ -19,6 +19,9 @@ type Config struct {
 	DOSpacesKey            string        `mapstructure:"doSpaces"`
 	MailJetApiKey          string        `mapstructure:"mailJetApiKey"`
 	MailJetSecretKey       string        `mapstructure:"mailJetSecretKey"`
+	VultrAccessKey         string        `mapstructure:"vultrAccessKey"`
+	VultrSecretKey         string        `mapstructure:"vultrSecretKey"`
+	VultrHostname          string        `mapstructure:"vultrHostname"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
