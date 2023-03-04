@@ -2,7 +2,6 @@ package connection
 
 import (
 	"database/sql"
-	"log"
 	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -12,22 +11,17 @@ import (
 func ConnectDB() *sql.DB {
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		log.Println(err.Error())
-		return nil
+		panic(err)
 	}
 
 	db, err := sql.Open("pgx", config.DBString)
 	if err != nil {
-		log.Println(err)
-		return nil
+		panic(err)
 	}
-
-	time.Sleep(1 * time.Second)
 
 	err = db.Ping()
 	if err != nil {
-		log.Println("db connection closed")
-		return nil
+		panic(err)
 	}
 
 	db.SetMaxIdleConns(5)
