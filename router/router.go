@@ -47,7 +47,7 @@ func Router() *chi.Mux {
 
 		r.Get("/getLinksByAccountID/{accountID}", h.GetLinksByUserID)
 
-		r.Post("/setEmailVerifiedToTrue", h.SetEmailVerifiedToTrue)
+		r.Post("/setEmailVerifiedToTrue/{email}", h.SetEmailVerifiedToTrue)
 
 		r.Route("/account", func(r chi.Router) {
 			r.Post("/", h.ContinueWithGoogle)
