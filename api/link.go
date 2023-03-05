@@ -168,7 +168,7 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 		favicon = <-urlFaviconChan
 	}
 
-	u := launcher.New().UserDataDir("/home/saasita/.config/chromium").Leakless(true).NoSandbox(true).Headless(true).
+	u := launcher.New().UserDataDir("~/.config/google-chrome").Leakless(true).NoSandbox(true).Headless(true).
 		MustLaunch()
 
 	browser := rod.New().ControlURL(u).MustConnect()
