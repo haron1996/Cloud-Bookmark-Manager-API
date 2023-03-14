@@ -22,26 +22,26 @@ import (
 )
 
 // CREATE FOLDER
-type createRootFolderRequest struct {
-	FolderName string `json:"folder_name"`
-	FolderID   string `json:"parent_folder_id"`
-}
+// type createRootFolderRequest struct {
+// 	FolderName string `json:"folder_name"`
+// 	FolderID   string `json:"parent_folder_id"`
+// }
 
-func (s createRootFolderRequest) validate(reqValidationChan chan error) error {
-	returnVal := validation.ValidateStruct(&s,
-		validation.Field(&s.FolderName, validation.Required.When(s.FolderName == "").Error("Folder name is required"), validation.Match(regexp.MustCompile("^[^?[\\]{}|\\\\`./!@#$%^&*()_-]+$")).Error("Folder name must not have special characters"), validation.Length(1, 100).Error("Folder name must be at least 1 character long")),
-		// validation.Field(&s.FolderID, validation.Length(33, 33).Error("folder id must be 33 characters long")),
-	)
-	reqValidationChan <- returnVal
-	return returnVal
-}
+// func (s createRootFolderRequest) validate(reqValidationChan chan error) error {
+// 	returnVal := validation.ValidateStruct(&s,
+// 		validation.Field(&s.FolderName, validation.Required.When(s.FolderName == "").Error("Folder name is required"), validation.Match(regexp.MustCompile("^[^?[\\]{}|\\\\`./!@#$%^&*()_-]+$")).Error("Folder name must not have special characters"), validation.Length(1, 100).Error("Folder name must be at least 1 character long")),
+
+// 	)
+// 	reqValidationChan <- returnVal
+// 	return returnVal
+// }
 
 func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	// log.Printf("authorized payload: %v", r.Context().Value("authorizedPayload").(*auth.PayLoad))
 
-	requestBody := r.Context().Value("myValues").(*middleware.RequestBody).Body
+	requestBody := r.Context().Value("myValues").(*middleware.CreateFolderRequestBody).Body
 
-	authorizedPayload := r.Context().Value("myValues").(*middleware.RequestBody).PayLoad
+	authorizedPayload := r.Context().Value("myValues").(*middleware.CreateFolderRequestBody).PayLoad
 
 	// log.Println(rB)
 
@@ -1452,8 +1452,4 @@ func (h *BaseHandler) DeleteFoldersForever(w http.ResponseWriter, r *http.Reques
 	}
 
 	util.JsonResponse(w, folders)
-}
-
-func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
-	// invite users to collection
 }

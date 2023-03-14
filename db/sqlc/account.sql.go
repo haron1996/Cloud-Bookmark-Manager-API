@@ -181,3 +181,17 @@ func (q *Queries) UpdateLastLogin(ctx context.Context, arg UpdateLastLoginParams
 	)
 	return i, err
 }
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE account SET account_password = $1 WHERE id = $2
+`
+
+type UpdatePasswordParams struct {
+	AccountPassword string `json:"account_password"`
+	ID              int64  `json:"id"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.AccountPassword, arg.ID)
+	return err
+}

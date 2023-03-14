@@ -46,7 +46,7 @@ func (s signUp) Validate(requestValidationChan chan error) error {
 		validation.Field(&s.FullName, validation.Required.Error("name required"), validation.Length(1, 255).Error("name must be between 1 and 255 characters long")),
 		// Emails are optional, but if given must be valid.
 		validation.Field(&s.EmailAddress, validation.Required.Error("email address is required"), is.Email.Error("email must be valid email address")),
-		validation.Field(&s.Password, validation.Required.Error("password is required")),
+		validation.Field(&s.Password, validation.Required.Error("password is required"), validation.Length(6, 1000).Error("password must be at least 6 characters long")),
 	)
 
 	requestValidationChan <- err

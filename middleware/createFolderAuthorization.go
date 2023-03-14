@@ -11,7 +11,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
-	dbutils "github.com/kwandapchumba/go-bookmark-manager/db/dbutils"
+	"github.com/kwandapchumba/go-bookmark-manager/db"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
@@ -26,13 +26,13 @@ func (s createFolderRequest) validate() error {
 	)
 }
 
-type RequestBody struct {
+type CreateFolderRequestBody struct {
 	PayLoad *auth.PayLoad
 	Body    *createFolderRequest
 }
 
-func newRequestBody(p auth.PayLoad, b createFolderRequest) *RequestBody {
-	return &RequestBody{
+func newCreateFolderRequestBody(p auth.PayLoad, b createFolderRequest) *CreateFolderRequestBody {
+	return &CreateFolderRequestBody{
 		PayLoad: &p,
 		Body:    &b,
 	}
@@ -70,7 +70,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 				// means folder is root
 				payload := r.Context().Value("payload").(*auth.PayLoad)
 
-				rB := newRequestBody(*payload, req)
+				rB := newCreateFolderRequestBody(*payload, req)
 
 				ctx := context.WithValue(r.Context(), "myValues", rB)
 
@@ -80,7 +80,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 				// let's check if folder exists
 				payload := r.Context().Value("payload").(*auth.PayLoad)
 
-				folder, err := dbutils.ReturnFolder(r.Context(), req.FolderID)
+				folder, err := db.ReturnFolder(r.Context(), req.FolderID)
 				if err != nil {
 					util.Response(w, "parent folder not found", http.StatusNotFound)
 					return
@@ -89,7 +89,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 				// folder exists
 				if folder.AccountID == payload.AccountID {
 					// means user owns folder... hence can edit
-					rB := newRequestBody(*payload, req)
+					rB := newCreateFolderRequestBody(*payload, req)
 
 					ctx := context.WithValue(r.Context(), "myValues", rB)
 
@@ -102,7 +102,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 				if folder.AccountID != payload.AccountID {
 					// mmmhh... let's check if this folder is shared..
 					// do this by getting shared collection by collection id (folder id)
-					sharedCollection, err := dbutils.ReturnSharedCollection(context.Background(), folder.FolderID)
+					sharedCollection, err := db.ReturnSharedCollection(context.Background(), folder.FolderID)
 					if err != nil {
 						// if folder is not shared, means user has no access
 						if errors.Is(err, sql.ErrNoRows) {
@@ -114,7 +114,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 
 					// folder is shared
 					// let's check if this user has access to this shared collection
-					sharedCollection, err = dbutils.ReturnSharedCollectionByCollectionIDandAccountID(r.Context(), sharedCollection.CollectionID, payload.AccountID)
+					sharedCollection, err = db.ReturnSharedCollectionByCollectionIDandAccountID(r.Context(), sharedCollection.CollectionID, payload.AccountID)
 					if err != nil {
 						if errors.Is(err, sql.ErrNoRows) {
 							// means folder has not been shared with this user
@@ -127,7 +127,6 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 
 					// folder has been shared with this user
 					// let's check if permission is edit
-					log.Printf("shared collection access level is: %v", sharedCollection.CollectionAccessLevel)
 
 					if sharedCollection.CollectionAccessLevel == "view" {
 						// means user is not allowed to edit this folder
@@ -137,7 +136,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 
 					if sharedCollection.CollectionAccessLevel == "edit" {
 						// user is allowed to edit this folder
-						rB := newRequestBody(*payload, req)
+						rB := newCreateFolderRequestBody(*payload, req)
 
 						ctx := context.WithValue(r.Context(), "myValues", rB)
 

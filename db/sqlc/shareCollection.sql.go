@@ -10,7 +10,7 @@ import (
 )
 
 const getSharedCollection = `-- name: GetSharedCollection :one
-SELECT collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_access_level FROM shared_collection WHERE collection_id = $1 LIMIT 1
+SELECT collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_share_expiry, collection_access_level FROM shared_collection WHERE collection_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetSharedCollection(ctx context.Context, collectionID string) (SharedCollection, error) {
@@ -21,13 +21,14 @@ func (q *Queries) GetSharedCollection(ctx context.Context, collectionID string) 
 		&i.CollectionSharedBy,
 		&i.CollectionSharedWith,
 		&i.CollectionSharedAt,
+		&i.CollectionShareExpiry,
 		&i.CollectionAccessLevel,
 	)
 	return i, err
 }
 
 const getSharedCollectionByCollectionIDandAccountID = `-- name: GetSharedCollectionByCollectionIDandAccountID :one
-SELECT collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_access_level FROM shared_collection WHERE collection_id = $1 AND collection_shared_with = $2 LIMIT 1
+SELECT collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_share_expiry, collection_access_level FROM shared_collection WHERE collection_id = $1 AND collection_shared_with = $2 LIMIT 1
 `
 
 type GetSharedCollectionByCollectionIDandAccountIDParams struct {
@@ -43,6 +44,7 @@ func (q *Queries) GetSharedCollectionByCollectionIDandAccountID(ctx context.Cont
 		&i.CollectionSharedBy,
 		&i.CollectionSharedWith,
 		&i.CollectionSharedAt,
+		&i.CollectionShareExpiry,
 		&i.CollectionAccessLevel,
 	)
 	return i, err
@@ -51,7 +53,7 @@ func (q *Queries) GetSharedCollectionByCollectionIDandAccountID(ctx context.Cont
 const shareCollection = `-- name: ShareCollection :one
 INSERT INTO shared_collection (collection_id, collection_shared_by, collection_shared_with, collection_access_level)
 VALUES ($1, $2, $3, $4)
-RETURNING collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_access_level
+RETURNING collection_id, collection_shared_by, collection_shared_with, collection_shared_at, collection_share_expiry, collection_access_level
 `
 
 type ShareCollectionParams struct {
@@ -74,6 +76,7 @@ func (q *Queries) ShareCollection(ctx context.Context, arg ShareCollectionParams
 		&i.CollectionSharedBy,
 		&i.CollectionSharedWith,
 		&i.CollectionSharedAt,
+		&i.CollectionShareExpiry,
 		&i.CollectionAccessLevel,
 	)
 	return i, err

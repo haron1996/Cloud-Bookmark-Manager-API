@@ -14,8 +14,9 @@ import (
 type CollectionAccessLevel string
 
 const (
-	CollectionAccessLevelView CollectionAccessLevel = "view"
-	CollectionAccessLevelEdit CollectionAccessLevel = "edit"
+	CollectionAccessLevelView  CollectionAccessLevel = "view"
+	CollectionAccessLevelEdit  CollectionAccessLevel = "edit"
+	CollectionAccessLevelAdmin CollectionAccessLevel = "admin"
 )
 
 func (e *CollectionAccessLevel) Scan(src interface{}) error {
@@ -100,6 +101,17 @@ type Folder struct {
 	TextsearchableIndexCol interface{}    `json:"textsearchable_index_col"`
 }
 
+type Invite struct {
+	InviteID                int64                 `json:"invite_id"`
+	InviteToken             string                `json:"invite_token"`
+	SharedCollectionID      string                `json:"shared_collection_id"`
+	CollectionSharedByName  string                `json:"collection_shared_by_name"`
+	CollectionSharedByEmail string                `json:"collection_shared_by_email"`
+	CollectionSharedWith    string                `json:"collection_shared_with"`
+	InviteExpiry            time.Time             `json:"invite_expiry"`
+	CollectionAccessLevel   CollectionAccessLevel `json:"collection_access_level"`
+}
+
 type Link struct {
 	LinkID                 string         `json:"link_id"`
 	LinkTitle              string         `json:"link_title"`
@@ -116,6 +128,13 @@ type Link struct {
 	TextsearchableIndexCol interface{}    `json:"textsearchable_index_col"`
 }
 
+type PasswordResetToken struct {
+	ID          sql.NullInt64 `json:"id"`
+	AccountID   int64         `json:"account_id"`
+	TokenHash   string        `json:"token_hash"`
+	TokenExpiry time.Time     `json:"token_expiry"`
+}
+
 type PublicSharedCollection struct {
 	CollectionID          string                `json:"collection_id"`
 	CollectionPassword    string                `json:"collection_password"`
@@ -130,5 +149,6 @@ type SharedCollection struct {
 	CollectionSharedBy    int64                 `json:"collection_shared_by"`
 	CollectionSharedWith  int64                 `json:"collection_shared_with"`
 	CollectionSharedAt    time.Time             `json:"collection_shared_at"`
+	CollectionShareExpiry sql.NullTime          `json:"collection_share_expiry"`
 	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`
 }

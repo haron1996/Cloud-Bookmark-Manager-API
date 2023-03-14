@@ -3,14 +3,18 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/google/uuid"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
+	"github.com/kwandapchumba/go-bookmark-manager/mailjet"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
@@ -47,7 +51,7 @@ func (h *BaseHandler) RequestResetPasswordLink(w http.ResponseWriter, r *http.Re
 	err = req.validate()
 	if err != nil {
 		log.Printf("request validation error: %v", err)
-		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		util.Response(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -56,8 +60,13 @@ func (h *BaseHandler) RequestResetPasswordLink(w http.ResponseWriter, r *http.Re
 	account, err := q.GetAccountByEmail(context.Background(), req.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// account does not exist
-			// send an account does not exist email with link to sign up
+			mail := mailjet.NewAccountNotFoundEmail(req.Email)
+
+			mail.SendAccountNotFoundEmail()
+
+			util.Response(w, "reset password link has been sent", http.StatusOK)
+
+			return
 		} else {
 			log.Printf("could not get account by email: %v", err)
 			util.Response(w, "something went wrong", http.StatusInternalServerError)
@@ -65,5 +74,25 @@ func (h *BaseHandler) RequestResetPasswordLink(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	log.Println(account)
+	token := uuid.NewString()
+
+	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
+
+	params := sqlc.CreatePasswordResetTokenParams{
+		AccountID:   account.ID,
+		TokenHash:   encodedToken,
+		TokenExpiry: time.Now().UTC().Add(15 * time.Minute),
+	}
+
+	_, err = q.CreatePasswordResetToken(context.Background(), params)
+	if err != nil {
+		util.Response(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	mail := mailjet.NewPasswordResetTokenMail(account.Fullname, account.Email, token)
+
+	mail.SendPasswordResetMail()
+
+	util.Response(w, "reset password link has been sent", http.StatusOK)
 }

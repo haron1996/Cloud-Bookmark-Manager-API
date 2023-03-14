@@ -47,6 +47,14 @@ func Router() *chi.Mux {
 
 		r.Get("/getLinksByAccountID/{accountID}", h.GetLinksByUserID)
 
+		r.Post("/requestResetPasswordLink", h.RequestResetPasswordLink)
+
+		r.Patch("/updatePassword", h.UpdatePassword)
+
+		r.Post("/uploadHeroImage", h.UploadHeroImage)
+
+		r.Get("/getCollectionAndInviterNames/{inviteToken}", h.GetCollectionAndInviterNames)
+
 		r.Route("/account", func(r chi.Router) {
 			r.Post("/", h.ContinueWithGoogle)
 			r.Post("/create", h.NewAccount)
@@ -65,8 +73,15 @@ func Router() *chi.Mux {
 
 		r.Route("/folder", func(r chi.Router) {
 			r.Route("/create", func(r chi.Router) {
+				// user create folder authorization middleware
 				r.Use(cm.AuthorizeCreateFolderRequest())
 				r.Post("/", h.CreateFolder)
+			})
+
+			r.Route("/share", func(r chi.Router) {
+				// use share collecton authorization middleware
+				r.Use(cm.AuthorizeShareCollectionRequest())
+				r.Post("/", h.ShareCollection)
 			})
 			// r.Post("/create", h.CreateFolder)
 			r.Post("/new-child-folder", h.CreateChildFolder)

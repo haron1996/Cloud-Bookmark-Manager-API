@@ -35,6 +35,7 @@ func (s signin) Validate(requestValidationChan chan error) error {
 }
 
 func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
+	log.Printf("request body: %v", r.Body)
 	data := json.NewDecoder(r.Body)
 
 	data.DisallowUnknownFields()

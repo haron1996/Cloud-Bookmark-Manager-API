@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
-	dbutils "github.com/kwandapchumba/go-bookmark-manager/db/dbutils"
+	"github.com/kwandapchumba/go-bookmark-manager/db"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
@@ -28,7 +28,7 @@ func AuthenticateRequest() func(next http.Handler) http.Handler {
 
 			if payload != nil {
 
-				account, err := dbutils.ReturnAccount(context.Background(), payload.AccountID)
+				account, err := db.ReturnAccount(context.Background(), payload.AccountID)
 				if err != nil {
 					log.Println(err)
 					util.Response(w, errors.New("unauthorized").Error(), http.StatusUnauthorized)

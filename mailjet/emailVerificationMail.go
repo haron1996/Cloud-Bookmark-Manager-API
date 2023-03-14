@@ -2,7 +2,6 @@ package mailjet
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 	"github.com/mailjet/mailjet-apiv3-go/v4"
@@ -25,8 +24,7 @@ func NewMail(email, name, code string) *Mail {
 func (m Mail) SendEmailVificationMail() {
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		log.Println(err)
-		return
+		panic(err)
 	}
 
 	client := mailjet.NewMailjetClient(config.MailJetApiKey, config.MailJetSecretKey)
@@ -35,7 +33,7 @@ func (m Mail) SendEmailVificationMail() {
 		{
 			From: &mailjet.RecipientV31{
 				Email: "haron@bookmarkbucket.com",
-				Name:  "Team at Bookmark Bucket",
+				Name:  "Bookmarkbucket Team",
 			},
 			To: &mailjet.RecipientsV31{
 				mailjet.RecipientV31{
@@ -52,6 +50,6 @@ func (m Mail) SendEmailVificationMail() {
 
 	_, err = client.SendMailV31(&messages)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
