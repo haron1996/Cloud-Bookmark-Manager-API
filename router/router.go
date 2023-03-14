@@ -99,6 +99,7 @@ func Router() *chi.Mux {
 			r.Get("/getFolderChildren/{folderID}/{accountID}", h.GetFolderChildren)
 			r.Get("/getFolderAncestors/{folderID}", h.GetFolderAncestors)
 			r.Get("/searchFolders/{query}", h.SearchFolders)
+			r.Get("/getCollection/{collectionID}", h.GetCollection)
 		})
 
 		r.Route("/link", func(r chi.Router) {

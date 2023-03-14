@@ -51,7 +51,7 @@ func (i inviteUserMail) SendInviteUserEmail() {
 				},
 			},
 			Subject:  fmt.Sprintf(`%s has shared a collection with you 👏`, i.InvitedByName),
-			HTMLPart: fmt.Sprintf(`<p>Hey %s</p><p><span style="text-transform: capitalize;">%s</span>(%s) has shared a links collection (%s) with you.</p><a href="http://localhost:5173/accounts/accept_invite?token=%s">Click here to join them.</a><p>Your invite expires on %dth %s %d so <a href="http://localhost:5173/accounts/accept_invite?token=%s">join %s now</a>.</p><p>Regards,</P><p><a href="beta.linkspace.space">Linkspace</a> Team.</p>`, strings.Split(i.InvitedEmail, "@")[0], i.InvitedByName, i.InvitedByMail, i.CollectionName, i.Token, i.Expiry.Day(), i.Expiry.Month(), i.Expiry.Year(), i.Token, i.InvitedByName),
+			HTMLPart: fmt.Sprintf(`<p>Hey %s</p><p><span style="text-transform: capitalize;">%s</span>(%s) has shared a links collection (%s) with you.</p><a href="https://beta.linkspace.space/accounts/accept_invite?token=%s">Click here to join them.</a><p>Your invite expires on %dth %s %d so <a href="https://beta.linkspace.space/accounts/accept_invite?token=%s">join %s now</a>.</p><p>Regards,</P><p><a href="beta.linkspace.space">Linkspace</a> Team.</p>`, strings.Split(i.InvitedEmail, "@")[0], i.InvitedByName, i.InvitedByMail, i.CollectionName, i.Token, i.Expiry.Day(), i.Expiry.Month(), i.Expiry.Year(), i.Token, i.InvitedByName),
 		},
 	}
 	messages := mailjet.MessagesV31{Info: messagesInfo}
