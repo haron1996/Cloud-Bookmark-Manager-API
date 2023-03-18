@@ -45,7 +45,6 @@ func newShareCollectionRequestBody(p auth.PayLoad, b shareCollectionRequest, col
 	}
 }
 
-// check if user owns collection OR collection has been shared with them
 func AuthorizeShareCollectionRequest() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +73,6 @@ func AuthorizeShareCollectionRequest() func(next http.Handler) http.Handler {
 				return
 			}
 
-			// check if folder exists
 			folder, err := db.ReturnFolder(context.Background(), req.CollectionID)
 			if err != nil {
 
@@ -97,79 +95,52 @@ func AuthorizeShareCollectionRequest() func(next http.Handler) http.Handler {
 				return
 			}
 
-			// check if user owns folder
 			payload := r.Context().Value("payload").(*auth.PayLoad)
 
 			if folder.AccountID == payload.AccountID {
-				// user owns folder hence they are allowed to share
-				// pass user and body to context for further processing
 
 				rB := newShareCollectionRequestBody(*payload, req, folder.FolderName)
 
-				ctx := context.WithValue(r.Context(), "requestDetails", rB)
+				ctx := context.WithValue(r.Context(), "shareCollectionRequest", rB)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 
 				return
 			}
 
-			// check if collection is shared
-			sharedCollection, err := db.ReturnSharedCollection(context.Background(), req.CollectionID)
+			// check if folder has been shared with user
+			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(context.Background(), folder.FolderID, payload.AccountID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					err := errors.New("this collection is not shared")
-					log.Println(err)
-					util.Response(w, err.Error(), http.StatusUnauthorized)
+					log.Printf("could not find collection member instance in createFolderAuthorization.go: %v", err)
+					util.Response(w, "collection has not been shared with you", http.StatusUnauthorized)
 					return
 				}
 
 				var pgErr *pgconn.PgError
 
 				if errors.As(err, &pgErr) {
-					log.Println(pgErr)
+					log.Printf("could not get collection member in createFolderAuthorization.go... pgErr: %v", pgErr)
 					util.Response(w, "something went wrong", http.StatusInternalServerError)
 					return
 				}
 
-				log.Println(err)
+				log.Printf("could not get collection member in createFolderAuthorization.go... err: %v", err)
 				util.Response(w, "something went wrong", http.StatusInternalServerError)
 				return
 			}
 
-			// check if folder has been shared with user (request caller)
-			sharedCollection, err = db.ReturnSharedCollectionByCollectionIDandAccountID(context.Background(), sharedCollection.CollectionID, payload.AccountID)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					err := errors.New("this collection has not been shared with caller")
-					log.Println(err)
-					util.Response(w, err.Error(), http.StatusUnauthorized)
-					return
-				}
-
-				var pgErr *pgconn.PgError
-
-				if errors.As(err, &pgErr) {
-					log.Println(pgErr)
-					util.Response(w, "something went wrong", http.StatusInternalServerError)
-					return
-				}
-
-				log.Println(err)
-				util.Response(w, "something went wrong", http.StatusInternalServerError)
+			// check if user has admin rights
+			if collectionMember.CollectionAccessLevel != "admin" {
+				log.Printf(`user is not allowed to create edit this collection: user access level is not "admin" but "%v"`, collectionMember.CollectionAccessLevel)
+				util.Response(w, "access denied due to insufficient access level", http.StatusUnauthorized)
 				return
 			}
 
-			// check if request caller has admin rights... it's only collection owners and admins that can share collection
-			if sharedCollection.CollectionAccessLevel != "admin" {
-				err := errors.New("request caller does not have admin rights hence cannot share collection")
-				log.Println(err.Error())
-				util.Response(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
+			// user has admin rights hence allowed to edit this collection
 			rB := newShareCollectionRequestBody(*payload, req, folder.FolderName)
 
-			ctx := context.WithValue(r.Context(), "requestDetails", rB)
+			ctx := context.WithValue(r.Context(), "shareCollectionRequest", rB)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}

@@ -524,12 +524,12 @@ func (h *BaseHandler) GetFolderLinks(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	params := sqlc.GetFolderLinksParams{
-		AccountID: payload.AccountID,
-		FolderID:  sql.NullString{String: folderID, Valid: true},
-	}
+	// params := sqlc.GetFolderLinksParams{
+	// 	AccountID: payload.AccountID,
+	// 	FolderID:  sql.NullString{String: folderID, Valid: true},
+	// }
 
-	links, err := q.GetFolderLinks(context.Background(), params)
+	links, err := q.GetFolderLinks(context.Background(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		var pgErr *pgconn.PgError
 

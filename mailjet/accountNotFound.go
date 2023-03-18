@@ -30,7 +30,7 @@ func (a accountNotFoundEmail) SendAccountNotFoundEmail() {
 	messagesInfo := []mailjet.InfoMessagesV31{
 		{
 			From: &mailjet.RecipientV31{
-				Email: "support@linkspace.space",
+				Email: "accounts@linkspace.space",
 				Name:  "Haron from Linskspace",
 			},
 			To: &mailjet.RecipientsV31{

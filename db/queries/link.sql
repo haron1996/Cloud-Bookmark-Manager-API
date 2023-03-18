@@ -7,7 +7,7 @@ RETURNING *;
 SELECT * FROM link WHERE account_id = $1 AND folder_id IS NULL AND deleted_at IS NULL ORDER BY added_at DESC;
 
 -- name: GetFolderLinks :many
-SELECT * FROM link WHERE account_id = $1 AND folder_id = $2 AND deleted_at IS NULL ORDER BY added_at DESC;
+SELECT * FROM link WHERE folder_id = $1 AND deleted_at IS NULL ORDER BY added_at DESC;
 
 -- name: RenameLink :one
 UPDATE link SET link_title = $1 WHERE link_id = $2 RETURNING *;

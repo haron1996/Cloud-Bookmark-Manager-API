@@ -32,7 +32,7 @@ func (m Mail) SendEmailVificationMail() {
 	messagesInfo := []mailjet.InfoMessagesV31{
 		{
 			From: &mailjet.RecipientV31{
-				Email: "haron@bookmarkbucket.com",
+				Email: "accounts@linkspace.space",
 				Name:  "Bookmarkbucket Team",
 			},
 			To: &mailjet.RecipientsV31{

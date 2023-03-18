@@ -39,9 +39,9 @@ import (
 func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	// log.Printf("authorized payload: %v", r.Context().Value("authorizedPayload").(*auth.PayLoad))
 
-	requestBody := r.Context().Value("myValues").(*middleware.CreateFolderRequestBody).Body
+	requestBody := r.Context().Value("createFolderRequest").(*middleware.CreateFolderRequestBody).Body
 
-	authorizedPayload := r.Context().Value("myValues").(*middleware.CreateFolderRequestBody).PayLoad
+	authorizedPayload := r.Context().Value("createFolderRequest").(*middleware.CreateFolderRequestBody).PayLoad
 
 	// log.Println(rB)
 
@@ -289,28 +289,35 @@ func (h *BaseHandler) CreateChildFolder(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *BaseHandler) GetRootFolders(w http.ResponseWriter, r *http.Request) {
-	account_id := chi.URLParam(r, "accountID")
-
-	log.Printf("ACCOUNT ID: %s", account_id)
-
 	payload := r.Context().Value("payload").(*auth.PayLoad)
 
 	q := sqlc.New(h.db)
 
 	folders, err := q.GetRootNodes(context.Background(), payload.AccountID)
 	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("could not get root folders by user id at file: folder.go function: GetRootFolders: %v", err)
+			util.Response(w, "folders not found", http.StatusNoContent)
+			return
+		}
+
 		var pgErr *pgconn.PgError
 
 		if errors.As(err, &pgErr) {
 			log.Println(pgErr)
 			util.Response(w, internalServerError, http.StatusInternalServerError)
 			return
-		} else {
+		}
+
+		{
 			log.Println(err)
 			util.Response(w, internalServerError, http.StatusInternalServerError)
 			return
 		}
 	}
+
+	log.Println(folders)
 
 	util.JsonResponse(w, folders)
 }
@@ -369,10 +376,7 @@ func (h *BaseHandler) GetFolderChildren(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	childrenFolders, err := q.GetFolderNodes(context.Background(), sqlc.GetFolderNodesParams{
-		AccountID:   payload.AccountID,
-		SubfolderOf: sql.NullString{String: folderID, Valid: true},
-	})
+	childrenFolders, err := q.GetFolderNodes(context.Background(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -961,36 +965,38 @@ func (h *BaseHandler) MoveFoldersToTrash(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *BaseHandler) GetFolder(w http.ResponseWriter, r *http.Request) {
-	folderID := chi.URLParam(r, "folderID")
-	payload := r.Context().Value("payload").(*auth.PayLoad)
+	// folderID := chi.URLParam(r, "folderID")
+	// payload := r.Context().Value("payload").(*auth.PayLoad)
+
+	body := r.Context().Value("readRequestOnCollectionDetails").(*middleware.ReadRequestOnCollectionDetails)
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), folderID)
+	folder, err := q.GetFolder(context.Background(), body.FolderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
 		switch {
 		case errors.As(err, &pgErr):
-			log.Println(pgErr)
+			log.Printf("pgErr: %v", pgErr)
 			util.Response(w, internalServerError, http.StatusInternalServerError)
 			return
 		case errors.Is(err, sql.ErrNoRows):
-			log.Println(sql.ErrConnDone.Error())
+			log.Println(err)
 			util.Response(w, "folder not found", http.StatusNotFound)
 			return
 		default:
-			log.Println(err)
+			log.Printf("%v", err)
 			util.Response(w, internalServerError, http.StatusInternalServerError)
 			return
 		}
 	}
 
-	if folder.AccountID != payload.AccountID {
-		log.Println("user unauthorized for this operation")
-		util.Response(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
+	// if folder.AccountID != payload.AccountID {
+	// 	log.Println("user unauthorized for this operation")
+	// 	util.Response(w, "unauthorized", http.StatusUnauthorized)
+	// 	return
+	// }
 
 	util.JsonResponse(w, folder)
 }

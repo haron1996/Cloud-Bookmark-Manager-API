@@ -1,2 +1,3 @@
-2023/03/08-07:53:06.405 abdf Creating DB /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_developers.google.com_0.indexeddb.leveldb since it was missing.
-2023/03/08-07:53:06.416 abdf Reusing MANIFEST /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_developers.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/03/16-18:48:17.474 2fbb Reusing MANIFEST /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_developers.google.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/03/16-18:48:17.474 2fbb Recovering log #3
+2023/03/16-18:48:17.475 2fbb Reusing old log /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_developers.google.com_0.indexeddb.leveldb/000003.log 

@@ -1,2 +1,3 @@
-2023/03/14-06:02:21.708 5e81 Creating DB /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb since it was missing.
-2023/03/14-06:02:21.720 5e81 Reusing MANIFEST /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/03/18-08:00:46.726 67ec Reusing MANIFEST /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/03/18-08:00:46.726 67ec Recovering log #3
+2023/03/18-08:00:46.730 67ec Reusing old log /home/saasita/api/cloud-bookmark-manager/~/.config/google-chrome/Default/IndexedDB/https_www.youtube.com_0.indexeddb.leveldb/000003.log 

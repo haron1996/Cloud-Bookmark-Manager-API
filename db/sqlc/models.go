@@ -11,6 +11,49 @@ import (
 	"time"
 )
 
+type AccessLevel string
+
+const (
+	AccessLevelView  AccessLevel = "view"
+	AccessLevelEdit  AccessLevel = "edit"
+	AccessLevelAdmin AccessLevel = "admin"
+)
+
+func (e *AccessLevel) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AccessLevel(s)
+	case string:
+		*e = AccessLevel(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AccessLevel: %T", src)
+	}
+	return nil
+}
+
+type NullAccessLevel struct {
+	AccessLevel AccessLevel
+	Valid       bool // Valid is true if AccessLevel is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAccessLevel) Scan(value interface{}) error {
+	if value == nil {
+		ns.AccessLevel, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AccessLevel.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAccessLevel) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AccessLevel), nil
+}
+
 type CollectionAccessLevel string
 
 const (
@@ -75,6 +118,13 @@ type AccountSession struct {
 	ClientIp       string    `json:"client_ip"`
 }
 
+type CollectionMember struct {
+	CollectionID          string                `json:"collection_id"`
+	MemberID              int64                 `json:"member_id"`
+	JoinDate              time.Time             `json:"join_date"`
+	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`
+}
+
 type Contact struct {
 	ID          int64  `json:"id"`
 	Account     int64  `json:"account"`
@@ -101,17 +151,6 @@ type Folder struct {
 	TextsearchableIndexCol interface{}    `json:"textsearchable_index_col"`
 }
 
-type Invite struct {
-	InviteID                int64                 `json:"invite_id"`
-	InviteToken             string                `json:"invite_token"`
-	SharedCollectionID      string                `json:"shared_collection_id"`
-	CollectionSharedByName  string                `json:"collection_shared_by_name"`
-	CollectionSharedByEmail string                `json:"collection_shared_by_email"`
-	CollectionSharedWith    string                `json:"collection_shared_with"`
-	InviteExpiry            time.Time             `json:"invite_expiry"`
-	CollectionAccessLevel   CollectionAccessLevel `json:"collection_access_level"`
-}
-
 type Link struct {
 	LinkID                 string         `json:"link_id"`
 	LinkTitle              string         `json:"link_title"`
@@ -128,6 +167,17 @@ type Link struct {
 	TextsearchableIndexCol interface{}    `json:"textsearchable_index_col"`
 }
 
+type MemberInvite struct {
+	InviteID                int64       `json:"invite_id"`
+	InviteToken             string      `json:"invite_token"`
+	SharedCollectionID      string      `json:"shared_collection_id"`
+	CollectionSharedByName  string      `json:"collection_shared_by_name"`
+	CollectionSharedByEmail string      `json:"collection_shared_by_email"`
+	CollectionSharedWith    string      `json:"collection_shared_with"`
+	InviteExpiry            time.Time   `json:"invite_expiry"`
+	MemberAccessLevel       AccessLevel `json:"member_access_level"`
+}
+
 type PasswordResetToken struct {
 	ID          sql.NullInt64 `json:"id"`
 	AccountID   int64         `json:"account_id"`
@@ -139,15 +189,6 @@ type PublicSharedCollection struct {
 	CollectionID          string                `json:"collection_id"`
 	CollectionPassword    string                `json:"collection_password"`
 	CollectionSharedBy    int64                 `json:"collection_shared_by"`
-	CollectionSharedAt    time.Time             `json:"collection_shared_at"`
-	CollectionShareExpiry sql.NullTime          `json:"collection_share_expiry"`
-	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`
-}
-
-type SharedCollection struct {
-	CollectionID          string                `json:"collection_id"`
-	CollectionSharedBy    int64                 `json:"collection_shared_by"`
-	CollectionSharedWith  int64                 `json:"collection_shared_with"`
 	CollectionSharedAt    time.Time             `json:"collection_shared_at"`
 	CollectionShareExpiry sql.NullTime          `json:"collection_share_expiry"`
 	CollectionAccessLevel CollectionAccessLevel `json:"collection_access_level"`

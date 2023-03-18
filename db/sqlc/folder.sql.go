@@ -159,19 +159,44 @@ func (q *Queries) GetFolderAncestors(ctx context.Context, label string) ([]Folde
 	return items, nil
 }
 
+const getFolderByFolderAndAccountIds = `-- name: GetFolderByFolderAndAccountIds :one
+SELECT folder_id, account_id, folder_name, path, label, starred, folder_created_at, folder_updated_at, subfolder_of, folder_deleted_at, textsearchable_index_col FROM folder
+WHERE folder_id = $1 AND account_id = $2
+LIMIT 1
+`
+
+type GetFolderByFolderAndAccountIdsParams struct {
+	FolderID  string `json:"folder_id"`
+	AccountID int64  `json:"account_id"`
+}
+
+func (q *Queries) GetFolderByFolderAndAccountIds(ctx context.Context, arg GetFolderByFolderAndAccountIdsParams) (Folder, error) {
+	row := q.db.QueryRowContext(ctx, getFolderByFolderAndAccountIds, arg.FolderID, arg.AccountID)
+	var i Folder
+	err := row.Scan(
+		&i.FolderID,
+		&i.AccountID,
+		&i.FolderName,
+		&i.Path,
+		&i.Label,
+		&i.Starred,
+		&i.FolderCreatedAt,
+		&i.FolderUpdatedAt,
+		&i.SubfolderOf,
+		&i.FolderDeletedAt,
+		&i.TextsearchableIndexCol,
+	)
+	return i, err
+}
+
 const getFolderNodes = `-- name: GetFolderNodes :many
 SELECT folder_id, account_id, folder_name, path, label, starred, folder_created_at, folder_updated_at, subfolder_of, folder_deleted_at, textsearchable_index_col FROM folder
-WHERE account_id = $1 AND subfolder_of = $2 AND folder_deleted_at IS NULL
+WHERE subfolder_of = $1 AND folder_deleted_at IS NULL
 ORDER BY folder_created_at DESC
 `
 
-type GetFolderNodesParams struct {
-	AccountID   int64          `json:"account_id"`
-	SubfolderOf sql.NullString `json:"subfolder_of"`
-}
-
-func (q *Queries) GetFolderNodes(ctx context.Context, arg GetFolderNodesParams) ([]Folder, error) {
-	rows, err := q.db.QueryContext(ctx, getFolderNodes, arg.AccountID, arg.SubfolderOf)
+func (q *Queries) GetFolderNodes(ctx context.Context, subfolderOf sql.NullString) ([]Folder, error) {
+	rows, err := q.db.QueryContext(ctx, getFolderNodes, subfolderOf)
 	if err != nil {
 		return nil, err
 	}

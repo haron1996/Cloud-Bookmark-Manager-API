@@ -115,7 +115,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), config.Access_Token_Duration)
+	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now().UTC(), config.Access_Token_Duration)
 	if err != nil {
 		log.Printf("failed to create access token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
@@ -184,7 +184,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
+	res := newsession(account, accessToken, refreshToken)
 
 	util.JsonResponse(w, res)
 }

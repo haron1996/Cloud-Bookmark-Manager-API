@@ -15,8 +15,6 @@ SELECT 'up SQL query';
 -- +goose StatementEnd
 
 -- +goose Down
-DROP CONSTRAINT IF EXISTS fk_folder;
-DROP CONSTRAINT IF EXISTS fk_account;
 DROP TABLE IF EXISTS public_shared_collection;
 -- +goose StatementBegin
 SELECT 'down SQL query';

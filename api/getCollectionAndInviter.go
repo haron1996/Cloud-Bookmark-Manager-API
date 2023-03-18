@@ -41,12 +41,12 @@ func (h *BaseHandler) GetCollectionAndInviterNames(w http.ResponseWriter, r *htt
 		var pgErr *pgconn.PgError
 
 		if errors.As(err, &pgErr) {
-			log.Println(pgErr.Message)
+			log.Printf("could not get invite token at getCollectionAndInviter.go... pgErr: %v", pgErr)
 			util.Response(w, "something went wrong", http.StatusInternalServerError)
 			return
 		}
 
-		log.Println(err)
+		log.Printf("could not get invite token at getCollectionAndInviter.go: %v", err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}

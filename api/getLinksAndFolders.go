@@ -3,16 +3,13 @@ package api
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
+	"github.com/kwandapchumba/go-bookmark-manager/middleware"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
@@ -57,28 +54,30 @@ func newReturnedFolder(f sqlc.Folder) returnFolder {
 }
 
 func (h *BaseHandler) GetLinksAndFolders(w http.ResponseWriter, r *http.Request) {
-	folderID := chi.URLParam(r, "folderID")
+	// folderID := chi.URLParam(r, "folderID")
 
-	accountID := chi.URLParam(r, "accountID")
+	// accountID := chi.URLParam(r, "accountID")
 
-	payload := r.Context().Value("payload").(*auth.PayLoad)
+	// payload := r.Context().Value("payload").(*auth.PayLoad)
 
-	account_id, err := strconv.Atoi(accountID)
-	if err != nil {
-		ErrorInternalServerError(w, err)
-		return
-	}
+	// account_id, err := strconv.Atoi(accountID)
+	// if err != nil {
+	// 	ErrorInternalServerError(w, err)
+	// 	return
+	// }
 
-	if int64(account_id) != payload.AccountID {
-		log.Println("account IDs do not match")
-		util.Response(w, errors.New("account IDs do not match").Error(), http.StatusUnauthorized)
-		return
-	}
+	// if int64(account_id) != payload.AccountID {
+	// 	log.Println("account IDs do not match")
+	// 	util.Response(w, errors.New("account IDs do not match").Error(), http.StatusUnauthorized)
+	// 	return
+	// }
 
-	if folderID == "null" {
-		getRootNodesAndLinks(h, payload.AccountID, w)
+	body := r.Context().Value("readRequestOnCollectionDetails").(*middleware.ReadRequestOnCollectionDetails)
+
+	if body.FolderID == "null" {
+		getRootNodesAndLinks(h, body.Payload.AccountID, w)
 	} else {
-		getFolderNodesAndLinks(h, payload.AccountID, folderID, w)
+		getFolderNodesAndLinks(h, body.Payload.AccountID, body.FolderID, w)
 	}
 }
 
@@ -119,12 +118,12 @@ func getRootNodesAndLinks(h *BaseHandler, accountID int64, w http.ResponseWriter
 func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w http.ResponseWriter) {
 	q := sqlc.New(h.db)
 
-	getFolderNodesParams := sqlc.GetFolderNodesParams{
-		AccountID:   accountID,
-		SubfolderOf: sql.NullString{String: folderID, Valid: true},
-	}
+	// getFolderNodesParams := sqlc.GetFolderNodesParams{
+	// 	AccountID:   accountID,
+	// 	SubfolderOf: sql.NullString{String: folderID, Valid: true},
+	// }
 
-	nodes, err := q.GetFolderNodes(context.Background(), getFolderNodesParams)
+	nodes, err := q.GetFolderNodes(context.Background(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -137,12 +136,12 @@ func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w 
 		rfs = append(rfs, f)
 	}
 
-	getFolderLinksParams := sqlc.GetFolderLinksParams{
-		AccountID: accountID,
-		FolderID:  sql.NullString{String: folderID, Valid: true},
-	}
+	// getFolderLinksParams := sqlc.GetFolderLinksParams{
+	// 	AccountID: accountID,
+	// 	FolderID:  sql.NullString{String: folderID, Valid: true},
+	// }
 
-	links, err := q.GetFolderLinks(context.Background(), getFolderLinksParams)
+	links, err := q.GetFolderLinks(context.Background(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return

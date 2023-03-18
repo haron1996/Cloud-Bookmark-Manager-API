@@ -20,8 +20,8 @@ CREATE TABLE folder (
 
 ALTER TABLE folder ADD COLUMN textsearchable_index_col tsvector GENERATED ALWAYS AS (to_tsvector('english', folder_name)) STORED;
 
-CREATE INDEX path_gist_idx ON folder USING GIST (path);
-CREATE INDEX folder_name_search_idx ON folder USING GIN (textsearchable_index_col);
+CREATE INDEX IF NOT EXISTS path_gist_idx ON folder USING GIST (path);
+CREATE INDEX IF NOT EXISTS folder_name_search_idx ON folder USING GIN (textsearchable_index_col);
 -- CREATE INDEX path_idx ON folder USING btree(path);
 -- +goose StatementBegin
 SELECT 'up SQL query';

@@ -185,7 +185,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
+	res := newsession(account, accessToken, refreshToken)
 
 	util.JsonResponse(w, res)
 }

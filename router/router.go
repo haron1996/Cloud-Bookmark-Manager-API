@@ -55,6 +55,8 @@ func Router() *chi.Mux {
 
 		r.Get("/getCollectionAndInviterNames/{inviteToken}", h.GetCollectionAndInviterNames)
 
+		r.Post("/acceptInvite", h.AcceptInvite)
+
 		r.Route("/account", func(r chi.Router) {
 			r.Post("/", h.ContinueWithGoogle)
 			r.Post("/create", h.NewAccount)
@@ -67,7 +69,18 @@ func Router() *chi.Mux {
 	r.Route("/private", func(r chi.Router) {
 		r.Use(cm.AuthenticateRequest())
 
-		r.Get("/getLinksAndFolders/{accountID}/{folderID}", h.GetLinksAndFolders)
+		r.Get("/checkIfFolderHasBeenSharedWithUser/{userID}/{folderID}", h.CheckIfFolderHasBeenSharedWithUser)
+
+		// r.Get("/getLinksAndFolders/{accountID}/{folderID}", h.GetLinksAndFolders)
+		r.Route("/getLinksAndFolders/{accountID}/{folderID}", func(r chi.Router) {
+			r.Use(cm.AuthorizeReadRequestOnCollection())
+			r.Get("/", h.GetLinksAndFolders)
+		})
+
+		r.Route("/getCollectionsSharedWithMe/{accountID}/{folderID}", func(r chi.Router) {
+			r.Use(cm.AuthorizeReadRequestOnCollection())
+			r.Get("/", h.GetCollectionsSharedWithMe)
+		})
 
 		r.Get("/getFoldersAndLinksMovedToTrash/{accountID}", h.GetFoldersAndLinksMovedToTrash)
 
@@ -83,6 +96,12 @@ func Router() *chi.Mux {
 				r.Use(cm.AuthorizeShareCollectionRequest())
 				r.Post("/", h.ShareCollection)
 			})
+
+			r.Route("/getOne/{accountID}/{folderID}", func(r chi.Router) {
+				r.Use(cm.AuthorizeReadRequestOnCollection())
+				r.Get("/", h.GetFolder)
+			})
+
 			// r.Post("/create", h.CreateFolder)
 			r.Post("/new-child-folder", h.CreateChildFolder)
 			r.Patch("/star", h.StarFolders)
@@ -94,8 +113,8 @@ func Router() *chi.Mux {
 			r.Patch("/toggle-folder-starred", h.ToggleFolderStarred)
 			r.Patch("/restoreFoldersFromTrash", h.RestoreFoldersFromTrash)
 			r.Delete("/deleteFoldersForever", h.DeleteFoldersForever)
-			r.Get("/{folderID}", h.GetFolder)
-			r.Get("/get-folders/{accountID}", h.GetRootFolders)
+			// r.Get("/{folderID}", h.GetFolder)
+			r.Get("/getRootFoldersByUserID", h.GetRootFolders)
 			r.Get("/getFolderChildren/{folderID}/{accountID}", h.GetFolderChildren)
 			r.Get("/getFolderAncestors/{folderID}", h.GetFolderAncestors)
 			r.Get("/searchFolders/{query}", h.SearchFolders)

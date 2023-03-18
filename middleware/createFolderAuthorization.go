@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/jackc/pgconn"
 	"github.com/kwandapchumba/go-bookmark-manager/auth"
 	"github.com/kwandapchumba/go-bookmark-manager/db"
 	"github.com/kwandapchumba/go-bookmark-manager/util"
@@ -41,6 +42,7 @@ func newCreateFolderRequestBody(p auth.PayLoad, b createFolderRequest) *CreateFo
 func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			// get request body/content
 			body := json.NewDecoder(r.Body)
 
 			body.DisallowUnknownFields()
@@ -59,106 +61,98 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 				}
 			}
 
+			// validate request
 			if err := req.validate(); err != nil {
 				log.Println(err)
 				util.Response(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			// check if parent folder id exists... if not, no further checks
+			// check if user wants to create a root folder
 			if req.FolderID == "null" {
-				// means folder is root
 				payload := r.Context().Value("payload").(*auth.PayLoad)
 
 				rB := newCreateFolderRequestBody(*payload, req)
 
-				ctx := context.WithValue(r.Context(), "myValues", rB)
+				ctx := context.WithValue(r.Context(), "createFolderRequest", rB)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
-			} else {
-				// means folder is a child folder
-				// let's check if folder exists
-				payload := r.Context().Value("payload").(*auth.PayLoad)
-
-				folder, err := db.ReturnFolder(r.Context(), req.FolderID)
-				if err != nil {
-					util.Response(w, "parent folder not found", http.StatusNotFound)
-					return
-				}
-
-				// folder exists
-				if folder.AccountID == payload.AccountID {
-					// means user owns folder... hence can edit
-					rB := newCreateFolderRequestBody(*payload, req)
-
-					ctx := context.WithValue(r.Context(), "myValues", rB)
-
-					next.ServeHTTP(w, r.WithContext(ctx))
-
-					return
-				}
-
-				// user does not own folder
-				if folder.AccountID != payload.AccountID {
-					// mmmhh... let's check if this folder is shared..
-					// do this by getting shared collection by collection id (folder id)
-					sharedCollection, err := db.ReturnSharedCollection(context.Background(), folder.FolderID)
-					if err != nil {
-						// if folder is not shared, means user has no access
-						if errors.Is(err, sql.ErrNoRows) {
-							util.Response(w, "folder is not shared", http.StatusUnauthorized)
-						} else {
-							util.Response(w, "something went wrong", http.StatusInternalServerError)
-						}
-					}
-
-					// folder is shared
-					// let's check if this user has access to this shared collection
-					sharedCollection, err = db.ReturnSharedCollectionByCollectionIDandAccountID(r.Context(), sharedCollection.CollectionID, payload.AccountID)
-					if err != nil {
-						if errors.Is(err, sql.ErrNoRows) {
-							// means folder has not been shared with this user
-							util.Response(w, "this folder has not been shared with this user", http.StatusUnauthorized)
-						} else {
-							util.Response(w, "something went wrong", http.StatusInternalServerError)
-							return
-						}
-					}
-
-					// folder has been shared with this user
-					// let's check if permission is edit
-
-					if sharedCollection.CollectionAccessLevel == "view" {
-						// means user is not allowed to edit this folder
-						util.Response(w, "no edit access", http.StatusUnauthorized)
-						return
-					}
-
-					if sharedCollection.CollectionAccessLevel == "edit" {
-						// user is allowed to edit this folder
-						rB := newCreateFolderRequestBody(*payload, req)
-
-						ctx := context.WithValue(r.Context(), "myValues", rB)
-
-						next.ServeHTTP(w, r.WithContext(ctx))
-
-						return
-					}
-
-					log.Println("folder access level is none of the above!")
-				}
+				return
 			}
-			// check if user owns parent folder id... if true, no further checks
-			// check if folder exists in shared collectins... if not, unauthorized error
-			// check if folder has been shared with user... if not, return access denied
-			// check if user has access to edit shared collection... if not, unauthorized error
-			// all good, proceed
 
-			// payload := r.Context().Value("payload").(*auth.PayLoad)
+			// get user payload from request
+			payload := r.Context().Value("payload").(*auth.PayLoad)
 
-			// ctx := context.WithValue(r.Context(), "authorizedPayload", payload)
+			// get parent folder
+			folder, err := db.ReturnFolder(r.Context(), req.FolderID)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					log.Println("collection not found")
+					util.Response(w, "folder not found", http.StatusUnauthorized)
+					return
+				}
 
-			// next.ServeHTTP(w, r.WithContext(ctx))
+				var pgErr *pgconn.PgError
+
+				if errors.As(err, &pgErr) {
+					log.Println(pgErr)
+					util.Response(w, "something went wrong", http.StatusInternalServerError)
+					return
+				}
+
+				log.Println(err)
+				util.Response(w, "something went wrong", http.StatusInternalServerError)
+				return
+			}
+
+			// check if user owns parent folder
+			if folder.AccountID == payload.AccountID {
+				rB := newCreateFolderRequestBody(*payload, req)
+
+				ctx := context.WithValue(r.Context(), "createFolderRequest", rB)
+
+				next.ServeHTTP(w, r.WithContext(ctx))
+
+				return
+			}
+
+			// check if folder has been shared with user
+			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(context.Background(), folder.FolderID, payload.AccountID)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					log.Printf("could not find collection member instance in createFolderAuthorization.go: %v", err)
+					util.Response(w, "collection has not been shared with you", http.StatusUnauthorized)
+					return
+				}
+
+				var pgErr *pgconn.PgError
+
+				if errors.As(err, &pgErr) {
+					log.Printf("could not get collection member in createFolderAuthorization.go... pgErr: %v", pgErr)
+					util.Response(w, "something went wrong", http.StatusInternalServerError)
+					return
+				}
+
+				log.Printf("could not get collection member in createFolderAuthorization.go... err: %v", err)
+				util.Response(w, "something went wrong", http.StatusInternalServerError)
+				return
+			}
+
+			// check if user has admin rights
+			if collectionMember.CollectionAccessLevel != "admin" {
+				log.Printf(`user is not allowed to create edit this collection: user access level is not "admin" but "%v"`, collectionMember.CollectionAccessLevel)
+				util.Response(w, "access denied due to insufficient access level", http.StatusUnauthorized)
+				return
+			}
+
+			// user has admin rights hence allowed to edit this collection
+			rB := newCreateFolderRequestBody(*payload, req)
+
+			ctx := context.WithValue(r.Context(), "myValues", rB)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+
+			return
 		}
 
 		return http.HandlerFunc(fn)

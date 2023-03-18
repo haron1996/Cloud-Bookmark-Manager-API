@@ -7,18 +7,15 @@ import (
 	"github.com/kwandapchumba/go-bookmark-manager/db/sqlc"
 )
 
-func ReturnSharedCollectionByCollectionIDandAccountID(ctx context.Context, collectionID string, accountID int64) (*sqlc.SharedCollection, error) {
-	q := sqlc.New(connection.ConnectDB())
-
-	arg := sqlc.GetSharedCollectionByCollectionIDandAccountIDParams{
-		CollectionID:         collectionID,
-		CollectionSharedWith: accountID,
+func ReturnCollectionMemberByCollectionAndMemberIDs(ctx context.Context, collectionID string, accountID int64) (*sqlc.CollectionMember, error) {
+	arg := sqlc.GetCollectionMemberByCollectionAndMemberIDsParams{
+		CollectionID: collectionID,
+		MemberID:     accountID,
 	}
-
-	sharedCollection, err := q.GetSharedCollectionByCollectionIDandAccountID(ctx, arg)
+	collectionMember, err := sqlc.New(connection.ConnectDB()).GetCollectionMemberByCollectionAndMemberIDs(ctx, arg)
 	if err != nil {
-		return &sqlc.SharedCollection{}, err
+		return &sqlc.CollectionMember{}, err
 	}
 
-	return &sharedCollection, nil
+	return &collectionMember, nil
 }

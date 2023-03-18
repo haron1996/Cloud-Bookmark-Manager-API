@@ -26,17 +26,17 @@ type signUp struct {
 
 type session struct {
 	Account      sqlc.Account
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	Expiry       time.Time `json:"expiry"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	// Expiry       time.Time `json:"expiry"`
 }
 
-func newsession(account sqlc.Account, accessToken, refreshToken string, expiry time.Time) session {
+func newsession(account sqlc.Account, accessToken, refreshToken string) session {
 	return session{
 		Account:      account,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		Expiry:       expiry,
+		// Expiry:       expiry,
 	}
 }
 
@@ -147,7 +147,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now(), config.Access_Token_Duration)
+	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now().UTC(), config.Access_Token_Duration)
 	if err != nil {
 		log.Printf("failed to create access token with err: %v", err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
@@ -204,7 +204,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := newsession(account, accessToken, refreshToken, accessTokenPayload.Expiry)
+	res := newsession(account, accessToken, refreshToken)
 
 	util.JsonResponse(w, res)
 }
@@ -375,7 +375,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, conf
 		return
 	}
 
-	res := newsession(newAccount, accessToken, refreshToken, accessTokenPayload.Expiry)
+	res := newsession(newAccount, accessToken, refreshToken)
 
 	util.JsonResponse(w, res)
 }

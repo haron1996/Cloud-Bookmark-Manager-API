@@ -83,16 +83,11 @@ func (q *Queries) DeleteLinkForever(ctx context.Context, linkID string) (Link, e
 }
 
 const getFolderLinks = `-- name: GetFolderLinks :many
-SELECT link_id, link_title, link_thumbnail, link_favicon, link_hostname, link_url, link_notes, account_id, folder_id, added_at, updated_at, deleted_at, textsearchable_index_col FROM link WHERE account_id = $1 AND folder_id = $2 AND deleted_at IS NULL ORDER BY added_at DESC
+SELECT link_id, link_title, link_thumbnail, link_favicon, link_hostname, link_url, link_notes, account_id, folder_id, added_at, updated_at, deleted_at, textsearchable_index_col FROM link WHERE folder_id = $1 AND deleted_at IS NULL ORDER BY added_at DESC
 `
 
-type GetFolderLinksParams struct {
-	AccountID int64          `json:"account_id"`
-	FolderID  sql.NullString `json:"folder_id"`
-}
-
-func (q *Queries) GetFolderLinks(ctx context.Context, arg GetFolderLinksParams) ([]Link, error) {
-	rows, err := q.db.QueryContext(ctx, getFolderLinks, arg.AccountID, arg.FolderID)
+func (q *Queries) GetFolderLinks(ctx context.Context, folderID sql.NullString) ([]Link, error) {
+	rows, err := q.db.QueryContext(ctx, getFolderLinks, folderID)
 	if err != nil {
 		return nil, err
 	}

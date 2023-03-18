@@ -13,7 +13,6 @@ SELECT 'up SQL query';
 -- +goose StatementEnd
 
 -- +goose Down
-DROP CONSTRAINT IF EXISTS fk_account;
 DROP TABLE IF EXISTS password_reset_token;
 -- +goose StatementBegin
 SELECT 'down SQL query';

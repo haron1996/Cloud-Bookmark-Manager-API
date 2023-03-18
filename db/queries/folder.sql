@@ -10,7 +10,7 @@ ORDER BY folder_created_at DESC;
 
 -- name: GetFolderNodes :many
 SELECT * FROM folder
-WHERE account_id = $1 AND subfolder_of = $2 AND folder_deleted_at IS NULL
+WHERE subfolder_of = $1 AND folder_deleted_at IS NULL
 ORDER BY folder_created_at DESC;
 
 -- name: GetFolderAncestors :many
@@ -24,6 +24,11 @@ ORDER BY path;
 -- name: GetFolder :one
 SELECT * FROM folder
 WHERE folder_id = $1
+LIMIT 1;
+
+-- name: GetFolderByFolderAndAccountIds :one
+SELECT * FROM folder
+WHERE folder_id = $1 AND account_id = $2
 LIMIT 1;
 
 -- name: StarFolder :one

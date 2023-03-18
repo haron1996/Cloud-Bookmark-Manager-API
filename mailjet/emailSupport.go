@@ -37,7 +37,7 @@ func (m EmailSupportRequest) EmailSupport() error {
 	messagesInfo := []mailjet.InfoMessagesV31{
 		{
 			From: &mailjet.RecipientV31{
-				Email: "haron@bookmarkbucket.com",
+				Email: "support@linkspace.space",
 				Name:  "BookmarkBucket Support",
 			},
 			To: &mailjet.RecipientsV31{
