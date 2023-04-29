@@ -75,23 +75,23 @@ func (h *BaseHandler) GetLinksAndFolders(w http.ResponseWriter, r *http.Request)
 	body := r.Context().Value("readRequestOnCollectionDetails").(*middleware.ReadRequestOnCollectionDetails)
 
 	if body.FolderID == "null" {
-		getRootNodesAndLinks(h, body.Payload.AccountID, w)
+		getRootNodesAndLinks(h, body.Payload.AccountID, w, r.Context())
 	} else {
-		getFolderNodesAndLinks(h, body.Payload.AccountID, body.FolderID, w)
+		getFolderNodesAndLinks(h, body.Payload.AccountID, body.FolderID, w, r.Context())
 	}
 }
 
-func getRootNodesAndLinks(h *BaseHandler, accountID int64, w http.ResponseWriter) {
+func getRootNodesAndLinks(h *BaseHandler, accountID int64, w http.ResponseWriter, ctx context.Context) {
 	q := sqlc.New(h.db)
 
-	fs, err := q.GetRootFolders(context.Background(), accountID)
+	fs, err := q.GetRootFolders(ctx, accountID)
 	if err != nil {
 		log.Println(err)
 		util.Response(w, err.Error(), 500)
 		return
 	}
 
-	// nodes, err := q.GetRootNodes(context.Background(), accountID)
+	// nodes, err := q.GetRootNodes(ctx, accountID)
 	// if err != nil {
 	// 	ErrorInternalServerError(w, err)
 	// 	return
@@ -104,7 +104,7 @@ func getRootNodesAndLinks(h *BaseHandler, accountID int64, w http.ResponseWriter
 		rfs = append(rfs, folder)
 	}
 
-	links, err := q.GetRootLinks(context.Background(), accountID)
+	links, err := q.GetRootLinks(ctx, accountID)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -115,7 +115,7 @@ func getRootNodesAndLinks(h *BaseHandler, accountID int64, w http.ResponseWriter
 	util.JsonResponse(w, res)
 }
 
-func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w http.ResponseWriter) {
+func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w http.ResponseWriter, ctx context.Context) {
 	q := sqlc.New(h.db)
 
 	// getFolderNodesParams := sqlc.GetFolderNodesParams{
@@ -123,7 +123,7 @@ func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w 
 	// 	SubfolderOf: sql.NullString{String: folderID, Valid: true},
 	// }
 
-	nodes, err := q.GetFolderNodes(context.Background(), sql.NullString{String: folderID, Valid: true})
+	nodes, err := q.GetFolderNodes(ctx, sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -141,7 +141,7 @@ func getFolderNodesAndLinks(h *BaseHandler, accountID int64, folderID string, w 
 	// 	FolderID:  sql.NullString{String: folderID, Valid: true},
 	// }
 
-	links, err := q.GetFolderLinks(context.Background(), sql.NullString{String: folderID, Valid: true})
+	links, err := q.GetFolderLinks(ctx, sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return

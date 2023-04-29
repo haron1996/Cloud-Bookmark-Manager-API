@@ -12,7 +12,7 @@ import (
 	"github.com/kwandapchumba/go-bookmark-manager/util"
 )
 
-func LoginUser(account sqlc.Account, q *sqlc.Queries) (string, string, http.Cookie) {
+func LoginUser(account sqlc.Account, q *sqlc.Queries, ctx context.Context) (string, string, http.Cookie) {
 	config, err := util.LoadConfig(".")
 	if err != nil {
 		log.Fatalf("could not load config at login.go: %v", err)
@@ -50,7 +50,7 @@ func LoginUser(account sqlc.Account, q *sqlc.Queries) (string, string, http.Cook
 		ClientIp:       "",
 	}
 
-	_, err = q.CreateAccountSession(context.Background(), createAccountSessionParams)
+	_, err = q.CreateAccountSession(ctx, createAccountSessionParams)
 	if err != nil {
 		var pgErr *pgconn.PgError
 

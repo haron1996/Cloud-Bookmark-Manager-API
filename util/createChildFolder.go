@@ -1,7 +1,6 @@
 package util
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -42,8 +41,8 @@ func newReturnedFolder(f sqlc.Folder) returnFolder {
 	}
 }
 
-func CreateChildFolder(ctx context.Context, q *sqlc.Queries, w http.ResponseWriter, r *http.Request, folder_name, folder_id string, account_id int64) {
-	parentFolder, err := q.GetFolder(context.Background(), folder_id)
+func CreateChildFolder(q *sqlc.Queries, w http.ResponseWriter, r *http.Request, folder_name, folder_id string, account_id int64) {
+	parentFolder, err := q.GetFolder(r.Context(), folder_id)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -102,7 +101,7 @@ func CreateChildFolder(ctx context.Context, q *sqlc.Queries, w http.ResponseWrit
 		Label:       label,
 	}
 
-	folder, err := q.CreateFolder(context.Background(), arg)
+	folder, err := q.CreateFolder(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 

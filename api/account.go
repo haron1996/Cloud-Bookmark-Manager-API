@@ -89,7 +89,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	emailExists, err := q.EmailExists(context.Background(), req.EmailAddress)
+	emailExists, err := q.EmailExists(r.Context(), req.EmailAddress)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -125,7 +125,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		AccountPassword: p,
 	}
 
-	account, err := q.NewAccount(context.Background(), arg)
+	account, err := q.NewAccount(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -170,7 +170,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		ClientIp:       "",
 	}
 
-	_, err = q.CreateAccountSession(context.Background(), createAccountSessionParams)
+	_, err = q.CreateAccountSession(r.Context(), createAccountSessionParams)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -185,7 +185,7 @@ func (h *BaseHandler) NewAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	account, err = q.GetAccount(context.Background(), account.ID)
+	account, err = q.GetAccount(r.Context(), account.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -265,7 +265,7 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	existingAccount, err := q.GetAccountByEmail(context.Background(), email)
+	existingAccount, err := q.GetAccountByEmail(r.Context(), email)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -280,7 +280,7 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 				// Picture:  req.Picture,
 			}
 
-			createAccount(createAccountParams, q, w, h, config)
+			createAccount(createAccountParams, q, w, h, config, r.Context())
 
 			return
 		default:
@@ -290,12 +290,12 @@ func (h *BaseHandler) ContinueWithGoogle(w http.ResponseWriter, r *http.Request)
 	}
 
 	if existingAccount != (sqlc.Account{}) {
-		loginUser(existingAccount, w, h, config)
+		loginUser(existingAccount, w, h, config, r.Context())
 	}
 }
 
-func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWriter, h *BaseHandler, config util.Config) {
-	account, err := q.NewAccount(context.Background(), arg)
+func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWriter, h *BaseHandler, config util.Config, ctx context.Context) {
+	account, err := q.NewAccount(ctx, arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -309,16 +309,16 @@ func createAccount(arg sqlc.NewAccountParams, q *sqlc.Queries, w http.ResponseWr
 		}
 	}
 
-	if err := q.UpdateAccountEmailVerificationStatus(context.Background(), arg.Email); err != nil {
+	if err := q.UpdateAccountEmailVerificationStatus(ctx, arg.Email); err != nil {
 		log.Println(err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
-	loginUser(account, w, h, config)
+	loginUser(account, w, h, config, ctx)
 }
 
-func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, config util.Config) {
+func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, config util.Config, ctx context.Context) {
 	accessToken, accessTokenPayload, err := auth.CreateToken(account.ID, time.Now().UTC(), config.Access_Token_Duration)
 	if err != nil {
 		ErrorInternalServerError(w, err)
@@ -332,7 +332,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, conf
 	// 	ID:        accessTokenPayload.AccountID,
 	// }
 
-	// if _, err := q.UpdateLastLogin(context.Background(), updateLastLoginParams); err != nil {
+	// if _, err := q.UpdateLastLogin(r.Context(), updateLastLoginParams); err != nil {
 	// 	ErrorInternalServerError(w, err)
 	// 	return
 	// }
@@ -352,7 +352,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, conf
 		ClientIp:       "",
 	}
 
-	if _, err := q.CreateAccountSession(context.Background(), createAccountSessionParams); err != nil {
+	if _, err := q.CreateAccountSession(ctx, createAccountSessionParams); err != nil {
 		ErrorInternalServerError(w, err)
 		return
 	}
@@ -363,13 +363,13 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, conf
 		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,
 		Secure:   true,
-		SameSite: http.SameSite(http.SameSiteStrictMode),
+		SameSite: http.SameSiteStrictMode,
 		HttpOnly: true,
 	}
 
 	http.SetCookie(w, &refreshTokenCookie)
 
-	newAccount, err := q.GetAccount(context.Background(), account.ID)
+	newAccount, err := q.GetAccount(ctx, account.ID)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -383,7 +383,7 @@ func loginUser(account sqlc.Account, w http.ResponseWriter, h *BaseHandler, conf
 func (h *BaseHandler) GetAllAccounts(w http.ResponseWriter, r *http.Request) {
 	q := sqlc.New(h.db)
 
-	accounts, err := q.GetAllAccounts(context.Background())
+	accounts, err := q.GetAllAccounts(r.Context())
 	if err != nil {
 		log.Println(err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)

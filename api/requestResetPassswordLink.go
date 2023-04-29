@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -57,7 +56,7 @@ func (h *BaseHandler) RequestResetPasswordLink(w http.ResponseWriter, r *http.Re
 
 	q := sqlc.New(h.db)
 
-	account, err := q.GetAccountByEmail(context.Background(), req.Email)
+	account, err := q.GetAccountByEmail(r.Context(), req.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			mail := mailjet.NewAccountNotFoundEmail(req.Email)
@@ -84,7 +83,7 @@ func (h *BaseHandler) RequestResetPasswordLink(w http.ResponseWriter, r *http.Re
 		TokenExpiry: time.Now().UTC().Add(15 * time.Minute),
 	}
 
-	_, err = q.CreatePasswordResetToken(context.Background(), params)
+	_, err = q.CreatePasswordResetToken(r.Context(), params)
 	if err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return

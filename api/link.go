@@ -45,7 +45,7 @@ func (h *BaseHandler) GetRootLinks(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	links, err := q.GetRootLinks(context.Background(), payload.AccountID)
+	links, err := q.GetRootLinks(r.Context(), payload.AccountID)
 	if err != nil {
 		log.Println(err)
 		util.Response(w, errors.New("something went wrong").Error(), http.StatusInternalServerError)
@@ -274,7 +274,7 @@ func (h *BaseHandler) AddLink(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	link, err := q.AddLink(context.Background(), addLinkParams)
+	link, err := q.AddLink(r.Context(), addLinkParams)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -340,7 +340,7 @@ func (h *BaseHandler) RenameLink(w http.ResponseWriter, r *http.Request) {
 		LinkID:    req.LinkID,
 	}
 
-	link, err := q.RenameLink(context.Background(), renameLinkParams)
+	link, err := q.RenameLink(r.Context(), renameLinkParams)
 	if err != nil {
 		ErrorInternalServerError(w, err)
 		return
@@ -400,17 +400,17 @@ func (h *BaseHandler) MoveLinks(w http.ResponseWriter, r *http.Request) {
 	q := sqlc.New(h.db)
 
 	if req.FolerID == "" {
-		moveLinksToRoot(q, req.Links, w)
+		moveLinksToRoot(q, req.Links, w, r.Context())
 	} else {
-		moveLinksToFolder(q, req.Links, req.FolerID, w)
+		moveLinksToFolder(q, req.Links, req.FolerID, w, r.Context())
 	}
 }
 
-func moveLinksToRoot(q *sqlc.Queries, links []string, w http.ResponseWriter) {
+func moveLinksToRoot(q *sqlc.Queries, links []string, w http.ResponseWriter, ctx context.Context) {
 	var linksMoved []sqlc.Link
 
 	for _, linkID := range links {
-		link, err := q.MoveLinkToRoot(context.Background(), linkID)
+		link, err := q.MoveLinkToRoot(ctx, linkID)
 		if err != nil {
 			ErrorInternalServerError(w, err)
 			return
@@ -422,7 +422,7 @@ func moveLinksToRoot(q *sqlc.Queries, links []string, w http.ResponseWriter) {
 	util.JsonResponse(w, linksMoved)
 }
 
-func moveLinksToFolder(q *sqlc.Queries, links []string, folderID string, w http.ResponseWriter) {
+func moveLinksToFolder(q *sqlc.Queries, links []string, folderID string, w http.ResponseWriter, ctx context.Context) {
 	var linksMoved []sqlc.Link
 
 	for _, linkID := range links {
@@ -430,7 +430,7 @@ func moveLinksToFolder(q *sqlc.Queries, links []string, folderID string, w http.
 			FolderID: sql.NullString{String: folderID, Valid: true},
 			LinkID:   linkID,
 		}
-		link, err := q.MoveLinkToFolder(context.Background(), params)
+		link, err := q.MoveLinkToFolder(ctx, params)
 		if err != nil {
 			ErrorInternalServerError(w, err)
 			return
@@ -493,7 +493,7 @@ func (h *BaseHandler) MoveLinksToTrash(w http.ResponseWriter, r *http.Request) {
 	var trashedLinks []sqlc.Link
 
 	for _, linkID := range req.LinkIDS {
-		link, err := q.MoveLinkToTrash(context.Background(), linkID)
+		link, err := q.MoveLinkToTrash(r.Context(), linkID)
 		if err != nil {
 			ErrorInternalServerError(w, err)
 			return
@@ -529,7 +529,7 @@ func (h *BaseHandler) GetFolderLinks(w http.ResponseWriter, r *http.Request) {
 	// 	FolderID:  sql.NullString{String: folderID, Valid: true},
 	// }
 
-	links, err := q.GetFolderLinks(context.Background(), sql.NullString{String: folderID, Valid: true})
+	links, err := q.GetFolderLinks(r.Context(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -599,7 +599,7 @@ func (h *BaseHandler) RestoreLinksFromTrash(w http.ResponseWriter, r *http.Reque
 	var links []sqlc.Link
 
 	for _, linkID := range req.LinkIDS {
-		l, err := q.RestoreLinkFromTrash(context.Background(), linkID)
+		l, err := q.RestoreLinkFromTrash(r.Context(), linkID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -670,7 +670,7 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 
 	for _, linkID := range req.LinkIDS {
 		// get link
-		link, err := q.GetLink(context.Background(), linkID)
+		link, err := q.GetLink(r.Context(), linkID)
 		if err != nil {
 			log.Println(err)
 			util.Response(w, "something went wrong", http.StatusInternalServerError)
@@ -703,7 +703,7 @@ func (h *BaseHandler) DeleteLinksForever(w http.ResponseWriter, r *http.Request)
 		// 	return
 		// }
 
-		l, err := q.DeleteLinkForever(context.Background(), link.LinkID)
+		l, err := q.DeleteLinkForever(r.Context(), link.LinkID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -736,7 +736,7 @@ func (h *BaseHandler) GetLinksByUserID(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	links, err := q.GetLinksByUserID(context.Background(), accountID)
+	links, err := q.GetLinksByUserID(r.Context(), accountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			util.Response(w, "no links found", http.StatusNotFound)

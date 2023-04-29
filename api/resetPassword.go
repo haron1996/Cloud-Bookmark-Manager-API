@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -58,7 +57,7 @@ func (h *BaseHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	tokenHash := base64.StdEncoding.EncodeToString([]byte(req.Token))
 
-	token, err := q.GetPasswordResetToken(context.Background(), tokenHash)
+	token, err := q.GetPasswordResetToken(r.Context(), tokenHash)
 	if err != nil {
 		log.Println(err)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -71,7 +70,7 @@ func (h *BaseHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = q.DeletePasswordResetToken(context.Background(), tokenHash)
+	err = q.DeletePasswordResetToken(r.Context(), tokenHash)
 	if err != nil {
 		log.Println(err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
@@ -96,7 +95,7 @@ func (h *BaseHandler) UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		ID:              token.AccountID,
 	}
 
-	err = q.UpdatePassword(context.Background(), updatePasswordParams)
+	err = q.UpdatePassword(r.Context(), updatePasswordParams)
 	if err != nil {
 		log.Println(err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)

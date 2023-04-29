@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -14,7 +13,7 @@ import (
 )
 
 func (h *BaseHandler) GetCollection(w http.ResponseWriter, r *http.Request) {
-	folder, err := sqlc.New(h.db).GetFolder(context.Background(), chi.URLParam(r, "collectionID"))
+	folder, err := sqlc.New(h.db).GetFolder(r.Context(), chi.URLParam(r, "collectionID"))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("collection not found")

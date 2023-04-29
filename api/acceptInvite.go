@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -62,7 +61,7 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	token, err := q.GetInviteByToken(context.Background(), base64.StdEncoding.EncodeToString([]byte(req.Token)))
+	token, err := q.GetInviteByToken(r.Context(), base64.StdEncoding.EncodeToString([]byte(req.Token)))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("invite token not found")
@@ -98,7 +97,7 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := q.NewAccount(context.Background(), sqlc.NewAccountParams{
+	account, err := q.NewAccount(r.Context(), sqlc.NewAccountParams{
 		Fullname:        req.Fullname,
 		Email:           token.CollectionSharedWith,
 		AccountPassword: hashedPassword,
@@ -117,7 +116,7 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := q.UpdateAccountEmailVerificationStatus(context.Background(), account.Email); err != nil {
+	if err := q.UpdateAccountEmailVerificationStatus(r.Context(), account.Email); err != nil {
 		var pgErr *pgconn.PgError
 
 		if errors.As(err, &pgErr) {
@@ -129,10 +128,9 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		log.Printf("could not update email verification status at accceptInvite.go: %v", err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
-
 	}
 
-	collection, err := q.GetFolder(context.Background(), token.SharedCollectionID)
+	collection, err := q.GetFolder(r.Context(), token.SharedCollectionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("collection not found")
@@ -154,7 +152,7 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := q.AddNewCollectionMember(context.Background(), sqlc.AddNewCollectionMemberParams{
+	if _, err := q.AddNewCollectionMember(r.Context(), sqlc.AddNewCollectionMemberParams{
 		CollectionID:          collection.FolderID,
 		MemberID:              account.ID,
 		CollectionAccessLevel: sqlc.CollectionAccessLevel(token.MemberAccessLevel),
@@ -172,9 +170,9 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, refreshTokenCookie := auth.LoginUser(account, q)
+	accessToken, refreshToken, refreshTokenCookie := auth.LoginUser(account, q, r.Context())
 
-	account, err = q.GetAccount(context.Background(), account.ID)
+	account, err = q.GetAccount(r.Context(), account.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("collection not found")
@@ -198,7 +196,7 @@ func (h *BaseHandler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	res := newsession(account, accessToken, refreshToken)
 
-	if err := q.DeleteInvite(context.Background(), base64.StdEncoding.EncodeToString([]byte(req.Token))); err != nil {
+	if err := q.DeleteInvite(r.Context(), base64.StdEncoding.EncodeToString([]byte(req.Token))); err != nil {
 		var pgErr *pgconn.PgError
 
 		if errors.As(err, &pgErr) {

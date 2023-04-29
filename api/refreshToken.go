@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -30,7 +29,7 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	queries := sqlc.New(h.db)
 
-	account, err := queries.GetAccount(context.Background(), payload.AccountID)
+	account, err := queries.GetAccount(r.Context(), payload.AccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			util.Response(w, "account not found", http.StatusUnauthorized)
@@ -83,7 +82,7 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		ClientIp:       "",
 	}
 
-	_, err = queries.CreateAccountSession(context.Background(), createAccountSessionParams)
+	_, err = queries.CreateAccountSession(r.Context(), createAccountSessionParams)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -98,7 +97,7 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	account, err = queries.GetAccount(context.Background(), account.ID)
+	account, err = queries.GetAccount(r.Context(), account.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			util.Response(w, "account not found", http.StatusUnauthorized)

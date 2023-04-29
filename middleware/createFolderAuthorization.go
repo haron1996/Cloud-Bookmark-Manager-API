@@ -117,7 +117,7 @@ func AuthorizeCreateFolderRequest() func(next http.Handler) http.Handler {
 			}
 
 			// check if folder has been shared with user
-			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(context.Background(), folder.FolderID, payload.AccountID)
+			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(r.Context(), folder.FolderID, payload.AccountID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					log.Printf("could not find collection member instance in createFolderAuthorization.go: %v", err)

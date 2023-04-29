@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -84,7 +83,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	account, err := q.GetAccountByEmail(context.Background(), req.Email)
+	account, err := q.GetAccountByEmail(r.Context(), req.Email)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -150,7 +149,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		ClientIp:       "",
 	}
 
-	_, err = q.CreateAccountSession(context.Background(), createAccountSessionParams)
+	_, err = q.CreateAccountSession(r.Context(), createAccountSessionParams)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -165,7 +164,7 @@ func (h *BaseHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	account, err = q.GetAccount(context.Background(), account.ID)
+	account, err = q.GetAccount(r.Context(), account.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 

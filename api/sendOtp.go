@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -93,7 +92,7 @@ func (h *BaseHandler) SendOTP(w http.ResponseWriter, r *http.Request) {
 		Expiry: time.Now().UTC().Add(30 * time.Minute),
 	}
 
-	if _, err = queries.NewEmailVerificationCode(context.Background(), params); err != nil {
+	if _, err = queries.NewEmailVerificationCode(r.Context(), params); err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}

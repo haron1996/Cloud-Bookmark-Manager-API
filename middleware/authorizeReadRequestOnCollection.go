@@ -64,7 +64,7 @@ func AuthorizeReadRequestOnCollection() func(next http.Handler) http.Handler {
 				return
 			}
 
-			collection, err := db.ReturnFolder(context.Background(), folderID)
+			collection, err := db.ReturnFolder(r.Context(), folderID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					err := errors.New("collection not found")
@@ -99,13 +99,13 @@ func AuthorizeReadRequestOnCollection() func(next http.Handler) http.Handler {
 			}
 
 			// user does not own folder hence check if folder has been shared with them
-			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(context.Background(), collection.FolderID, payload.AccountID)
+			collectionMember, err := db.ReturnCollectionMemberByCollectionAndMemberIDs(r.Context(), collection.FolderID, payload.AccountID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 
 					// this specific folder has not been shared with them
 					// check if any of it's ancestors has been shared with used
-					ancestorsOfFolder, err := db.ReturnAncestorsOfFolder(context.Background(), collection.FolderID)
+					ancestorsOfFolder, err := db.ReturnAncestorsOfFolder(r.Context(), collection.FolderID)
 					if err != nil {
 						if errors.Is(err, sql.ErrNoRows) {
 							log.Printf("authorizeReadRequestOnCollection: found no ancestors of folder: %v", err)
@@ -127,7 +127,7 @@ func AuthorizeReadRequestOnCollection() func(next http.Handler) http.Handler {
 					}
 
 					for _, ancestorOfFolder := range ancestorsOfFolder {
-						val, err := db.CheckIfCollectionMemberExists(context.Background(), ancestorOfFolder.FolderID, payload.AccountID)
+						val, err := db.CheckIfCollectionMemberExists(r.Context(), ancestorOfFolder.FolderID, payload.AccountID)
 						if err != nil {
 							var pgErr *pgconn.PgError
 

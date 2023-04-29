@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -31,7 +30,7 @@ func (h *BaseHandler) SearchLinks(w http.ResponseWriter, r *http.Request) {
 		AccountID: payload.AccountID,
 	}
 
-	links, err := q.SearchLinkz(context.Background(), arg)
+	links, err := q.SearchLinkz(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -72,7 +71,7 @@ func (h *BaseHandler) SearchFolders(w http.ResponseWriter, r *http.Request) {
 		AccountID:  payload.AccountID,
 	}
 
-	folders, err := q.SearchFolderz(context.Background(), arg)
+	folders, err := q.SearchFolderz(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 

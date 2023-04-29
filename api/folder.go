@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -94,7 +93,7 @@ func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	queries := sqlc.New(h.db)
 
 	if requestBody.FolderID != "null" {
-		util.CreateChildFolder(context.Background(), queries, w, r, requestBody.FolderName, requestBody.FolderID, authorizedPayload.AccountID)
+		util.CreateChildFolder(queries, w, r, requestBody.FolderName, requestBody.FolderID, authorizedPayload.AccountID)
 		return
 	}
 
@@ -133,7 +132,7 @@ func (h *BaseHandler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 		Label:       folderLabel,
 	}
 
-	folder, err := queries.CreateFolder(context.Background(), folderParams)
+	folder, err := queries.CreateFolder(r.Context(), folderParams)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -221,7 +220,7 @@ func (h *BaseHandler) CreateChildFolder(w http.ResponseWriter, r *http.Request) 
 
 	q := sqlc.New(h.db)
 
-	parentFolder, err := q.GetFolder(context.Background(), req.ParentFolder)
+	parentFolder, err := q.GetFolder(r.Context(), req.ParentFolder)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -268,7 +267,7 @@ func (h *BaseHandler) CreateChildFolder(w http.ResponseWriter, r *http.Request) 
 		Label:       folderLabel,
 	}
 
-	createdChildFolder, err := q.CreateFolder(context.Background(), arg)
+	createdChildFolder, err := q.CreateFolder(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -293,7 +292,7 @@ func (h *BaseHandler) GetRootFolders(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	folders, err := q.GetRootNodes(context.Background(), payload.AccountID)
+	folders, err := q.GetRootNodes(r.Context(), payload.AccountID)
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -345,7 +344,7 @@ func (h *BaseHandler) GetFolderChildren(w http.ResponseWriter, r *http.Request) 
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), folderID)
+	folder, err := q.GetFolder(r.Context(), folderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -376,7 +375,7 @@ func (h *BaseHandler) GetFolderChildren(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	childrenFolders, err := q.GetFolderNodes(context.Background(), sql.NullString{String: folderID, Valid: true})
+	childrenFolders, err := q.GetFolderNodes(r.Context(), sql.NullString{String: folderID, Valid: true})
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -392,7 +391,6 @@ func (h *BaseHandler) GetFolderChildren(w http.ResponseWriter, r *http.Request) 
 			log.Println(err)
 			util.Response(w, internalServerError, http.StatusInternalServerError)
 			return
-
 		}
 	}
 
@@ -405,7 +403,7 @@ func (h *BaseHandler) GetFolderAncestors(w http.ResponseWriter, r *http.Request)
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), folderID)
+	folder, err := q.GetFolder(r.Context(), folderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -426,7 +424,7 @@ func (h *BaseHandler) GetFolderAncestors(w http.ResponseWriter, r *http.Request)
 
 	label := folder.Label
 
-	ancestors, err := q.GetFolderAncestors(context.Background(), label)
+	ancestors, err := q.GetFolderAncestors(r.Context(), label)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -512,7 +510,7 @@ func (h *BaseHandler) StarFolders(w http.ResponseWriter, r *http.Request) {
 	var starredFolders []sqlc.Folder
 
 	for _, fid := range req.FolderIDs {
-		folder, err := q.GetFolder(context.Background(), fid)
+		folder, err := q.GetFolder(r.Context(), fid)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -529,7 +527,6 @@ func (h *BaseHandler) StarFolders(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				util.Response(w, internalServerError, http.StatusInternalServerError)
 				return
-
 			}
 		}
 
@@ -542,7 +539,7 @@ func (h *BaseHandler) StarFolders(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// toggle folder star status
-		starredFolder, err := q.StarFolder(context.Background(), folder.FolderID)
+		starredFolder, err := q.StarFolder(r.Context(), folder.FolderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -633,7 +630,7 @@ func (h *BaseHandler) UnstarFolders(w http.ResponseWriter, r *http.Request) {
 
 	for _, folderID := range req.FolderIDs {
 		// check if each folder exists
-		folder, err := q.GetFolder(context.Background(), folderID)
+		folder, err := q.GetFolder(r.Context(), folderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -663,7 +660,7 @@ func (h *BaseHandler) UnstarFolders(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// unstar each folder
-		unstarredFolder, err := q.UnstarFolder(context.Background(), folder.FolderID)
+		unstarredFolder, err := q.UnstarFolder(r.Context(), folder.FolderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -736,7 +733,7 @@ func (h *BaseHandler) ToggleFolderStarred(w http.ResponseWriter, r *http.Request
 	var foldersStarred []sqlc.Folder
 
 	for _, folderID := range req.FolderIDs {
-		folderStarred, err := q.ToggleFolderStarred(context.Background(), folderID)
+		folderStarred, err := q.ToggleFolderStarred(r.Context(), folderID)
 		if err != nil {
 			ErrorInternalServerError(w, err)
 			return
@@ -815,7 +812,7 @@ func (h *BaseHandler) RenameFolder(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), req.FolderID)
+	folder, err := q.GetFolder(r.Context(), req.FolderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -846,7 +843,7 @@ func (h *BaseHandler) RenameFolder(w http.ResponseWriter, r *http.Request) {
 		FolderID:   req.FolderID,
 	}
 
-	renamedFolder, err := q.RenameFolder(context.Background(), arg)
+	renamedFolder, err := q.RenameFolder(r.Context(), arg)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -917,7 +914,7 @@ func (h *BaseHandler) MoveFoldersToTrash(w http.ResponseWriter, r *http.Request)
 	var trashedFolders []sqlc.Folder
 
 	for _, folderID := range req.FolderIDs {
-		folder, err := q.GetFolder(context.Background(), folderID)
+		folder, err := q.GetFolder(r.Context(), folderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -943,7 +940,7 @@ func (h *BaseHandler) MoveFoldersToTrash(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		trashedFolder, err := q.MoveFolderToTrash(context.Background(), folder.FolderID)
+		trashedFolder, err := q.MoveFolderToTrash(r.Context(), folder.FolderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -972,7 +969,7 @@ func (h *BaseHandler) GetFolder(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), body.FolderID)
+	folder, err := q.GetFolder(r.Context(), body.FolderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -1067,7 +1064,7 @@ func (h *BaseHandler) MoveFolders(w http.ResponseWriter, r *http.Request) {
 
 	q := sqlc.New(h.db)
 
-	destinationFolder, err := q.GetFolder(context.Background(), req.DestinationFolderID)
+	destinationFolder, err := q.GetFolder(r.Context(), req.DestinationFolderID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -1096,7 +1093,7 @@ func (h *BaseHandler) MoveFolders(w http.ResponseWriter, r *http.Request) {
 	var foldersMoved []sqlc.Folder
 
 	for _, folder_ID := range req.FolderIDs {
-		folder, err := q.GetFolder(context.Background(), folder_ID)
+		folder, err := q.GetFolder(r.Context(), folder_ID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1128,7 +1125,7 @@ func (h *BaseHandler) MoveFolders(w http.ResponseWriter, r *http.Request) {
 			Label_3: folder.Label,
 		}
 
-		movedFolders, err := q.MoveFolder(context.Background(), arg)
+		movedFolders, err := q.MoveFolder(r.Context(), arg)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1148,7 +1145,7 @@ func (h *BaseHandler) MoveFolders(w http.ResponseWriter, r *http.Request) {
 			FolderID:    folder.FolderID,
 		}
 
-		_, err = q.UpdateFolderSubfolderOf(context.Background(), arg2)
+		_, err = q.UpdateFolderSubfolderOf(r.Context(), arg2)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1164,7 +1161,7 @@ func (h *BaseHandler) MoveFolders(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, movedFolder := range movedFolders {
-			movedFolder, err = q.GetFolder(context.Background(), movedFolder.FolderID)
+			movedFolder, err = q.GetFolder(r.Context(), movedFolder.FolderID)
 			if err != nil {
 				var pgErr *pgconn.PgError
 
@@ -1254,7 +1251,7 @@ func (h *BaseHandler) MoveFoldersToRoot(w http.ResponseWriter, r *http.Request) 
 	var foldersMovedToRoot []sqlc.Folder
 
 	for _, folderID := range req.FolderIDs {
-		folder, err := q.GetFolder(context.Background(), folderID)
+		folder, err := q.GetFolder(r.Context(), folderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1285,7 +1282,7 @@ func (h *BaseHandler) MoveFoldersToRoot(w http.ResponseWriter, r *http.Request) 
 			Label_2: folder.Label,
 		}
 
-		folderMovedToRoot, err := q.MoveFoldersToRoot(context.Background(), arg)
+		folderMovedToRoot, err := q.MoveFoldersToRoot(r.Context(), arg)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1300,7 +1297,7 @@ func (h *BaseHandler) MoveFoldersToRoot(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		if err := q.UpdateParentFolderToNull(context.Background(), folder.FolderID); err != nil {
+		if err := q.UpdateParentFolderToNull(r.Context(), folder.FolderID); err != nil {
 			var pgErr *pgconn.PgError
 
 			if errors.As(err, &pgErr) {
@@ -1369,7 +1366,7 @@ func (h *BaseHandler) RestoreFoldersFromTrash(w http.ResponseWriter, r *http.Req
 	var folders []sqlc.Folder
 
 	for _, folderID := range req.FolderIDS {
-		f, err := q.RestoreFolderFromTrash(context.Background(), folderID)
+		f, err := q.RestoreFolderFromTrash(r.Context(), folderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 
@@ -1439,7 +1436,7 @@ func (h *BaseHandler) DeleteFoldersForever(w http.ResponseWriter, r *http.Reques
 	var folders []sqlc.Folder
 
 	for _, folderID := range req.FolderIDS {
-		f, err := q.DeleteFolderForever(context.Background(), folderID)
+		f, err := q.DeleteFolderForever(r.Context(), folderID)
 		if err != nil {
 			var pgErr *pgconn.PgError
 

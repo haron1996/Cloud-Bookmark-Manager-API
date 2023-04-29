@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -50,7 +49,7 @@ func (h *BaseHandler) GetFoldersAndLinksMovedToTrash(w http.ResponseWriter, r *h
 
 	var links []sqlc.Link
 
-	folders, err = q.GetFoldersMovedToTrash(context.Background(), payload.AccountID)
+	folders, err = q.GetFoldersMovedToTrash(r.Context(), payload.AccountID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 
@@ -66,7 +65,7 @@ func (h *BaseHandler) GetFoldersAndLinksMovedToTrash(w http.ResponseWriter, r *h
 			return
 		}
 	}
-	links, err = q.GetLinksMovedToTrash(context.Background(), payload.AccountID)
+	links, err = q.GetLinksMovedToTrash(r.Context(), payload.AccountID)
 	if err != nil {
 		var pgErr *pgconn.PgError
 

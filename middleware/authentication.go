@@ -28,7 +28,7 @@ func AuthenticateRequest() func(next http.Handler) http.Handler {
 
 			if payload != nil {
 
-				account, err := db.ReturnAccount(context.Background(), payload.AccountID)
+				account, err := db.ReturnAccount(r.Context(), payload.AccountID)
 				if err != nil {
 					log.Println(err)
 					util.Response(w, errors.New("unauthorized").Error(), http.StatusUnauthorized)
