@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -66,7 +65,7 @@ func (h *BaseHandler) ContactSupport(w http.ResponseWriter, r *http.Request) {
 
 	queries := sqlc.New(h.db)
 
-	account, err := queries.GetAccount(context.Background(), payload.AccountID)
+	account, err := queries.GetAccount(r.Context(), payload.AccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println(err)
@@ -97,7 +96,7 @@ func (h *BaseHandler) ContactSupport(w http.ResponseWriter, r *http.Request) {
 		MessageBody: req.Message,
 	}
 
-	if _, err := queries.NewMessage(context.Background(), newMessageParams); err != nil {
+	if _, err := queries.NewMessage(r.Context(), newMessageParams); err != nil {
 		log.Println(err)
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return

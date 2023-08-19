@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"errors"
@@ -29,7 +28,7 @@ func newGetCollectionAndInviterNamesResponse(collectionName, inviterName string)
 func (h *BaseHandler) GetCollectionAndInviterNames(w http.ResponseWriter, r *http.Request) {
 	q := sqlc.New(h.db)
 
-	token, err := q.GetInviteByToken(context.Background(), base64.StdEncoding.EncodeToString([]byte(chi.URLParam(r, "inviteToken"))))
+	token, err := q.GetInviteByToken(r.Context(), base64.StdEncoding.EncodeToString([]byte(chi.URLParam(r, "inviteToken"))))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("invite not found")
@@ -51,7 +50,7 @@ func (h *BaseHandler) GetCollectionAndInviterNames(w http.ResponseWriter, r *htt
 		return
 	}
 
-	collection, err := q.GetFolder(context.Background(), token.SharedCollectionID)
+	collection, err := q.GetFolder(r.Context(), token.SharedCollectionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("collection not found")
@@ -73,7 +72,7 @@ func (h *BaseHandler) GetCollectionAndInviterNames(w http.ResponseWriter, r *htt
 		return
 	}
 
-	account, err := q.GetAccountByEmail(context.Background(), token.CollectionSharedByEmail)
+	account, err := q.GetAccountByEmail(r.Context(), token.CollectionSharedByEmail)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("account not found")

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -18,7 +17,7 @@ func (h *BaseHandler) GetCollectionsSharedWithMe(w http.ResponseWriter, r *http.
 
 	q := sqlc.New(h.db)
 
-	collectionsMemberInstances, err := q.GetCollectionsSharedWithUser(context.Background(), body.Payload.AccountID)
+	collectionsMemberInstances, err := q.GetCollectionsSharedWithUser(r.Context(), body.Payload.AccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("found no collection member instances at getCollectionsSharedWithMe.go: %v", err)
@@ -43,7 +42,7 @@ func (h *BaseHandler) GetCollectionsSharedWithMe(w http.ResponseWriter, r *http.
 	var collectionsSharedWithMeResponse []sqlc.Folder
 
 	for _, collectionMemberInstance := range collectionsMemberInstances {
-		collection, err := q.GetFolder(context.Background(), collectionMemberInstance.CollectionID)
+		collection, err := q.GetFolder(r.Context(), collectionMemberInstance.CollectionID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				err := errors.New("collection not found")

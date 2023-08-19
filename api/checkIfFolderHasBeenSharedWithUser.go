@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -27,7 +26,7 @@ func (h *BaseHandler) CheckIfFolderHasBeenSharedWithUser(w http.ResponseWriter, 
 
 	q := sqlc.New(h.db)
 
-	folder, err := q.GetFolder(context.Background(), folderID)
+	folder, err := q.GetFolder(r.Context(), folderID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("checkIFFolderHasBeenSharedWithUser.go: folder not found: %v", err)
@@ -59,7 +58,7 @@ func (h *BaseHandler) CheckIfFolderHasBeenSharedWithUser(w http.ResponseWriter, 
 		MemberID:     int64(memberID),
 	}
 
-	collectionMemberInstance, err := q.GetCollectionMemberByCollectionAndMemberIDs(context.Background(), args)
+	collectionMemberInstance, err := q.GetCollectionMemberByCollectionAndMemberIDs(r.Context(), args)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println("collectiom member instance not found")
@@ -67,7 +66,7 @@ func (h *BaseHandler) CheckIfFolderHasBeenSharedWithUser(w http.ResponseWriter, 
 			// return empty collection member instance
 			// this specific folder has not been shared with user.... check if one of it's ancestors has already been shared with user.... if so, return that ancestor folder that has been shared
 
-			ancestorsOfFolder, err := q.GetFolderAncestors(context.Background(), folder.Label)
+			ancestorsOfFolder, err := q.GetFolderAncestors(r.Context(), folder.Label)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					log.Printf("checkIfFolderHasBeenSharedWithUser.go: found no ancestors of folder: %v", err)
@@ -89,7 +88,7 @@ func (h *BaseHandler) CheckIfFolderHasBeenSharedWithUser(w http.ResponseWriter, 
 			}
 
 			for _, ancancestorOfFolder := range ancestorsOfFolder {
-				val, err := db.CheckIfCollectionMemberExists(context.Background(), ancancestorOfFolder.FolderID, args.MemberID)
+				val, err := db.CheckIfCollectionMemberExists(r.Context(), ancancestorOfFolder.FolderID, args.MemberID)
 				if err != nil {
 					var pgErr *pgconn.PgError
 
@@ -104,7 +103,7 @@ func (h *BaseHandler) CheckIfFolderHasBeenSharedWithUser(w http.ResponseWriter, 
 				}
 
 				if val {
-					cm, _ := q.GetCollectionMemberByCollectionAndMemberIDs(context.Background(), sqlc.GetCollectionMemberByCollectionAndMemberIDsParams{
+					cm, _ := q.GetCollectionMemberByCollectionAndMemberIDs(r.Context(), sqlc.GetCollectionMemberByCollectionAndMemberIDsParams{
 						CollectionID: ancancestorOfFolder.FolderID,
 						MemberID:     int64(memberID),
 					})

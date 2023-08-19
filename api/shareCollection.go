@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/base64"
 	"errors"
@@ -38,7 +37,7 @@ func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
 	// what if user owns the folder and yet wants to share with themselves? check if so
 	// what if invited user already is a member of collection?
 
-	inviterAccount, err := q.GetAccount(context.Background(), p.AccountID)
+	inviterAccount, err := q.GetAccount(r.Context(), p.AccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err := errors.New("account not found")
@@ -69,7 +68,7 @@ func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// TODO... check if email has an account associated with it already
-		accountInvited, err := q.GetAccountByEmail(context.Background(), email)
+		accountInvited, err := q.GetAccountByEmail(r.Context(), email)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				// email is not registered yet
@@ -89,7 +88,7 @@ func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
 					InviteToken:             encodedToken,
 				}
 
-				invite, err := q.CreateInvite(context.Background(), params)
+				invite, err := q.CreateInvite(r.Context(), params)
 				if err != nil {
 
 					var pgErr *pgconn.PgError
@@ -136,14 +135,14 @@ func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
 		// if email has an account associated with it already, create collection member instance, send an email with a link to the shared collection
 
 		// first this collection has already been shared with them before sharing
-		collectionMemberInstance, err := q.GetCollectionMemberByCollectionAndMemberIDs(context.Background(), sqlc.GetCollectionMemberByCollectionAndMemberIDsParams{
+		collectionMemberInstance, err := q.GetCollectionMemberByCollectionAndMemberIDs(r.Context(), sqlc.GetCollectionMemberByCollectionAndMemberIDsParams{
 			CollectionID: b.CollectionID,
 			MemberID:     accountInvited.ID,
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				// invited user is not an existing folder member hence invite them
-				folder, err := q.GetFolder(context.Background(), b.CollectionID)
+				folder, err := q.GetFolder(r.Context(), b.CollectionID)
 				if err != nil {
 					if errors.Is(err, sql.ErrNoRows) {
 						log.Printf("no folder found.... shareCollection.go: %v", err)
@@ -170,7 +169,7 @@ func (h *BaseHandler) ShareCollection(w http.ResponseWriter, r *http.Request) {
 					CollectionAccessLevel: sqlc.CollectionAccessLevel(b.AccessLevel),
 				}
 
-				_, err = q.AddNewCollectionMember(context.Background(), newCollectionMemberParams)
+				_, err = q.AddNewCollectionMember(r.Context(), newCollectionMemberParams)
 				if err != nil {
 					var pgErr *pgconn.PgError
 

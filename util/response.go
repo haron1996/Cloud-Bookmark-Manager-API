@@ -19,7 +19,6 @@ func Response(w http.ResponseWriter, message string, httpStatusCode int) {
 	w.Write(jsonResponse)
 }
 
-
 func JsonResponse(w http.ResponseWriter, res ...interface{}) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(200)

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -12,7 +11,7 @@ import (
 func (h *BaseHandler) GetAllUserMessages(w http.ResponseWriter, r *http.Request) {
 	q := sqlc.New(h.db)
 
-	messages, err := q.GetAllMessages(context.Background())
+	messages, err := q.GetAllMessages(r.Context())
 	if err != nil {
 		log.Println(err)
 		util.Response(w, "somenthing went wrong", http.StatusInternalServerError)

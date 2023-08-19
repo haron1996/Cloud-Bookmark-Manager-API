@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -86,7 +85,7 @@ func (h *BaseHandler) CheckIfIsAuthenticated(w http.ResponseWriter, r *http.Requ
 
 	q := sqlc.New(h.db)
 
-	account, err := q.GetAccount(context.Background(), int64(payload.AccountID))
+	account, err := q.GetAccount(r.Context(), int64(payload.AccountID))
 	if err != nil {
 		var pgErr *pgconn.PgError
 

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -82,7 +81,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 	queries := sqlc.New(h.db)
 
-	otp, err := queries.GetOtp(context.Background(), req.Email)
+	otp, err := queries.GetOtp(r.Context(), req.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			util.Response(w, "otp was not found", http.StatusNotFound)
@@ -103,12 +102,12 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = queries.UpdateAccountEmailVerificationStatus(context.Background(), otp.Email); err != nil {
+	if err = queries.UpdateAccountEmailVerificationStatus(r.Context(), otp.Email); err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
-	account, err := queries.GetAccountByEmail(context.Background(), otp.Email)
+	account, err := queries.GetAccountByEmail(r.Context(), otp.Email)
 	if err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
@@ -121,7 +120,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = queries.DeleteEmailVerificationCode(context.Background(), account.Email); err != nil {
+	if err = queries.DeleteEmailVerificationCode(r.Context(), account.Email); err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
@@ -146,7 +145,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  refreshTokenPayload.Expiry,
 		Secure:   true,
-		SameSite: http.SameSite(http.SameSiteStrictMode),
+		SameSite: http.SameSiteStrictMode,
 		HttpOnly: true,
 	}
 
@@ -161,7 +160,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		ClientIp:       "",
 	}
 
-	_, err = queries.CreateAccountSession(context.Background(), createAccountSessionParams)
+	_, err = queries.CreateAccountSession(r.Context(), createAccountSessionParams)
 	if err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
@@ -179,7 +178,7 @@ func (h *BaseHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 	// http.SetCookie(w, &refreshTokenCookie)
 
-	account, err = queries.GetAccountByEmail(context.Background(), otp.Email)
+	account, err = queries.GetAccountByEmail(r.Context(), otp.Email)
 	if err != nil {
 		util.Response(w, "something went wrong", http.StatusInternalServerError)
 		return
